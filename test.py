@@ -149,44 +149,36 @@ sheets_data = load_excel_data()
 
 
 # ==========================================
-# 5. HERO TEXT & DROPDOWN PERIODE
+# 5. HERO TEXT (DINAMIS DARI TANGGAL TRANSAKSI)
 # ==========================================
+# Pastikan kolom tanggal diformat sebagai datetime
+df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'])
+min_date = df['TANGGAL TRANSAKSI'].min().strftime('%d %b %Y')
+max_date = df['TANGGAL TRANSAKSI'].max().strftime('%d %b %Y')
+
 col_hero, col_filter = st.columns([4, 1])
 
 with col_hero:
-    st.markdown("""
+    st.markdown(f"""
     <div style="font-family: 'Inter', sans-serif;">
         <h1 style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pimpinan</h1>
-        <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">Terakhir diperbarui: 01 Jun 2026, 09:00 WIB &nbsp;|&nbsp; 🔄 Update Data</p>
+        <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">Periode Data: {min_date} s.d. {max_date}</p>
     </div>
     """, unsafe_allow_html=True)
-
-if sheets_data is not None:
-    daftar_periode = list(sheets_data.keys())
-else:
-    daftar_periode = ["2026 H1", "2025 H2", "2025 H1"] 
 
 with col_filter:
     st.write("") 
     selected_period = st.selectbox("Periode", daftar_periode, label_visibility="collapsed")
 
-st.write("")
-
-if sheets_data is None: 
-    st.stop()
-
-df = sheets_data[selected_period]
-
-
 # ==========================================
-# 6. PERHITUNGAN KPI
+# 6. PERHITUNGAN KPI (BARU)
 # ==========================================
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
+# Hitung Kepatuhan
 cp_stats = df.groupby(['SANDI CASH LENDER (Masked)', 'STATUS PD CASH BORROWER'])['SANDI CASH BORROWER (Masked)'].nunique().unstack(fill_value=0)
 if 'DU' not in cp_stats.columns: cp_stats['DU'] = 0
 if 'NON DU' not in cp_stats.columns: cp_stats['NON DU'] = 0
-
 cp_stats['Patuh'] = (cp_stats['DU'] >= 5) & (cp_stats['NON DU'] >= 5)
 
 total_lenders = len(cp_stats)
@@ -194,19 +186,33 @@ lender_patuh_count = cp_stats['Patuh'].sum()
 avg_kepatuhan = (lender_patuh_count / total_lenders) * 100 if total_lenders > 0 else 0
 jumlah_bermasalah = total_lenders - lender_patuh_count
 
-mean_du = int(cp_stats['DU'].mean()) if total_lenders > 0 else 0
-mean_non_du = int(cp_stats['NON DU'].mean()) if total_lenders > 0 else 0
-
-
 # ==========================================
-# 7. KPI CARDS
+# 7. KPI CARDS & HALF DONUT CHART
 # ==========================================
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
+# Kita buat 4 kolom: 1 untuk chart, 3 untuk metric
+c_chart, c1, c2, c3 = st.columns([1, 1, 1, 1])
+
+# A. Half Donut Chart untuk Komposisi DU/Non-DU
+with c_chart:
+    st.markdown("<div style='font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 5px;'>KOMPOSISI BANK</div>", unsafe_allow_html=True)
+    fig_donut = go.Figure(data=[go.Pie(
+        labels=['DU', 'Non DU'], 
+        values=[21, 84], 
+        hole=.6,
+        marker_colors=['#1e3a5f', '#bfdbfe'],
+        rotation=90,
+        direction='clockwise',
+        sort=False
+    )])
+    fig_donut.update_layout(height=120, margin=dict(t=0, b=0, l=0, r=0), showlegend=False)
+    # Trik "Half Donut" dengan menyembunyikan bagian bawah
+    fig_donut.update_traces(textinfo='none') 
+    st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+
+# B. Sisa Metrics
+c1.metric("Total Volume DU", f"Rp {total_volume_t:.2f} T")
 c2.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
-c3.metric("Pemenuhan CP Line", f"{mean_du} DU & {mean_non_du} NON-DU")
-c4.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
-
+c3.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
 
 # ==========================================
 # 8. CHARTS

@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS PALING AMAN (FOKUS PADA VISIBILITAS)
+# 2. CSS PALING AMAN (FOKUS PADA VISIBILITAS & KESERAGAMAN)
 # ==========================================
 st.markdown("""
 <style>
@@ -34,36 +34,39 @@ footer { display: none !important; }
 }
 .stApp { background-color: #f8fafc !important; }
 
-/* 3. DESAIN KARTU ANGKA (METRIC) */
-[data-testid="metric-container"] {
+/* 3. DESAIN KARTU UNIFIED (METRIC & CONTAINER GRAFIK) 
+   Membuat doughnut chart dan metric terlihat identik tanpa border kotak */
+[data-testid="metric-container"],
+[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
+    border: none !important; 
     border-top: 4px solid #1e3a5f !important;
-    padding: 20px !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
 }
+
+[data-testid="metric-container"] {
+    padding: 15px 20px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] {
+    padding: 15px !important;
+}
+
+/* Teks Label pada Metric */
 [data-testid="metric-container"] label {
     color: #64748b !important;
     font-weight: 700 !important;
     font-size: 12px !important;
     text-transform: uppercase !important;
 }
+/* Teks Angka pada Metric */
 [data-testid="stMetricValue"] {
     color: #0f172a !important;
     font-size: 26px !important;
     font-weight: 800 !important;
 }
 
-/* 4. DESAIN KARTU GRAFIK & NETWORK */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #ffffff !important;
-    border-radius: 12px !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
-    padding: 15px !important;
-}
-
-/* 5. CUSTOM NAVBAR */
+/* 4. CUSTOM NAVBAR */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
@@ -83,7 +86,7 @@ footer { display: none !important; }
 
 
 # ==========================================
-# 3. HTML NAVBAR CUSTOM (TEKS GELAP)
+# 3. HTML NAVBAR CUSTOM
 # ==========================================
 st.markdown("""
 <div class="nav-container">
@@ -137,7 +140,6 @@ def load_excel_data():
                 df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip()
                 df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].replace('NON-DU', 'NON DU')
                 
-            # Pastikan kolom tanggal berformat Datetime
             if 'TANGGAL TRANSAKSI' in df.columns:
                 df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'], errors='coerce')
                 
@@ -153,7 +155,6 @@ sheets_data = load_excel_data()
 # ==========================================
 # 5. HERO TEXT & DROPDOWN PERIODE
 # ==========================================
-# Susun Layout Kolom
 col_hero, col_filter = st.columns([4, 1])
 
 if sheets_data is not None:
@@ -161,7 +162,6 @@ if sheets_data is not None:
 else:
     daftar_periode = ["2026 H1", "2025 H2", "2025 H1"] 
 
-# Render Filter ditaruh di atas hero supaya kita dapat dataframe lebih awal
 with col_filter:
     st.write("") 
     selected_period = st.selectbox("Periode", daftar_periode, label_visibility="collapsed")
@@ -169,10 +169,8 @@ with col_filter:
 if sheets_data is None: 
     st.stop()
 
-# Ambil data terpilih
 df = sheets_data[selected_period]
 
-# Hitung TANGGAL MIN dan MAX untuk Hero Teks
 if 'TANGGAL TRANSAKSI' in df.columns and not df['TANGGAL TRANSAKSI'].isnull().all():
     min_date = df['TANGGAL TRANSAKSI'].min().strftime('%d %b %Y')
     max_date = df['TANGGAL TRANSAKSI'].max().strftime('%d %b %Y')
@@ -191,7 +189,7 @@ st.write("")
 
 
 # ==========================================
-# 6. PERHITUNGAN KPI UMUM & DONUT CHART DATA
+# 6. PERHITUNGAN KPI UMUM
 # ==========================================
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
@@ -205,29 +203,22 @@ lender_patuh_count = cp_stats['Patuh'].sum()
 avg_kepatuhan = (lender_patuh_count / total_lenders) * 100 if total_lenders > 0 else 0
 jumlah_bermasalah = total_lenders - lender_patuh_count
 
-# Menghitung DU / NON-DU dari seluruh Unique Bank (Pemberi & Peminjam)
-lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'})
-borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID_BANK', 'STATUS PD CASH BORROWER': 'STATUS'})
-all_mapping_status = pd.concat([lender_map, borrower_map]).dropna()
-all_mapping_status['STATUS'] = all_mapping_status['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
-
-# Jika bank pernah tercatat "DU", maka dilabeli "DU"
-bank_status_dict = all_mapping_status.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
-total_banks = len(bank_status_dict)
-du_count = sum(1 for s in bank_status_dict.values() if s == 'DU')
-non_du_count = total_banks - du_count
-
 
 # ==========================================
-# 7. KPI CARDS + HALF DOUGHNUT CHART
+# 7. KPI CARDS + HALF DOUGHNUT CHART (STATIS)
 # ==========================================
-# Set Chart Doughnut (Kiri), lalu 3 Metrics standar
-col_donut, c1, c2, c3 = st.columns([1.2, 1, 1, 1])
+# Kolom dibagi rata (4 kolom berukuran sama) agar proporsinya rapi
+col_donut, c1, c2, c3 = st.columns(4)
 
 with col_donut:
-    # Buat Half Doughnut Chart (Setengah lingkaran pakai Plotly Trick)
+    # --- Data Statis Sesuai Permintaan ---
+    total_banks = 105
+    du_count = 21
+    non_du_count = 84
+
+    # Chart Setup
     donut_labels = ['DU', 'Non-DU', '']
-    donut_values = [du_count, non_du_count, total_banks] # Elemen ke-3 = setengah total (hidden)
+    donut_values = [du_count, non_du_count, total_banks] 
     donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
 
     fig_donut = go.Figure(data=[go.Pie(
@@ -239,15 +230,18 @@ with col_donut:
 
     fig_donut.update_layout(
         showlegend=False,
-        margin=dict(t=0, b=0, l=0, r=0), height=120,
+        margin=dict(t=5, b=0, l=0, r=0), height=115, # Disesuaikan agar tingginya pas dengan metrik
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         annotations=[dict(text=f"<b>{total_banks}</b><br>Bank", x=0.5, y=0.15, font_size=16, showarrow=False, font=dict(color="#0f172a"))]
     )
     
+    # Dibungkus container agar punya class CSS stVerticalBlockBorderWrapper yang sama dengan metric
     with st.container(border=True):
-        st.markdown("<div style='text-align:center; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;'>Komposisi Ekosistem</div>", unsafe_allow_html=True)
+        # Gaya teks disamakan persis dengan label metric Streamlit
+        st.markdown("<div style='color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: -5px;'>Komposisi Ekosistem</div>", unsafe_allow_html=True)
         st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
+# Metrik lainnya
 c1.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
 c2.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
 c3.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
@@ -301,7 +295,7 @@ with col_chart2:
 
 
 # ==========================================
-# 9. NETWORK GRAPH (LOGIKA PEWARNAAN BERDASARKAN KOLOM STATUS)
+# 9. NETWORK GRAPH
 # ==========================================
 st.write("")
 with st.container(border=True):
@@ -322,6 +316,13 @@ with st.container(border=True):
             label_visibility="collapsed"
         )
     
+    # Mapping status untuk Network Chart
+    lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'})
+    borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID_BANK', 'STATUS PD CASH BORROWER': 'STATUS'})
+    all_mapping_status = pd.concat([lender_map, borrower_map]).dropna()
+    all_mapping_status['STATUS'] = all_mapping_status['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
+    bank_status_dict = all_mapping_status.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
+
     df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
     
     if selected_bank != "Semua Bank":
@@ -350,7 +351,6 @@ with st.container(border=True):
             x, y = pos[node]
             node_x.append(x); node_y.append(y)
             
-            # Memakai dictionary status yang sama dengan kalkulasi di atas
             status = bank_status_dict.get(str(node), 'NON DU')
             
             if status == 'DU':

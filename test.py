@@ -146,7 +146,6 @@ def load_excel_data():
 
 sheets_data = load_excel_data()
 
-
 # ==========================================
 # 6. HERO TEXT & DROPDOWN PERIODE
 # ==========================================
@@ -176,12 +175,11 @@ else:
 with col_hero:
     st.markdown(f"""
     <div style="font-family: 'Inter', sans-serif;">
-        <h1 style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pemantauan Dealer Utama</h1>
+        <div style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pemantauan Dealer Utama</div>
         <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">{periode_teks}</p>
     </div>
     """, unsafe_allow_html=True)
 st.write("")
-
 
 # ==========================================
 # 7. PERHITUNGAN KPI UMUM

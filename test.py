@@ -16,9 +16,11 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS PALING AMAN (FOKUS PADA VISIBILITAS & KESERAGAMAN)
+# 2. CSS PALING AMAN & LOAD SCRIPT ICONIFY
 # ==========================================
+# Memuat core-script Iconify agar tag <span class="iconify"> bisa terbaca otomatis
 st.markdown("""
+<script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
 <style>
 /* 1. HAPUS HEADER BAWAAN STREAMLIT */
 [data-testid="stHeader"] { display: none !important; }
@@ -34,8 +36,7 @@ footer { display: none !important; }
 }
 .stApp { background-color: #f8fafc !important; }
 
-/* 3. DESAIN KARTU UNIFIED (METRIC & CONTAINER GRAFIK) 
-   Membuat doughnut chart dan metric terlihat identik tanpa border kotak */
+/* 3. DESAIN KARTU UNIFIED (METRIC & CONTAINER GRAFIK) */
 [data-testid="metric-container"],
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
@@ -73,7 +74,7 @@ footer { display: none !important; }
     border-bottom: 1px solid #e2e8f0; margin-bottom: 25px;
 }
 .nav-logo { display: flex; align-items: center; gap: 15px; }
-.nav-logo-icon { background: #eff6ff; color: #1e3a5f; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 20px; }
+.nav-logo-icon { background: #eff6ff; color: #1e3a5f; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 22px; }
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
 .nav-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
 .nav-menu { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
@@ -88,10 +89,14 @@ footer { display: none !important; }
 # ==========================================
 # 3. HTML NAVBAR CUSTOM
 # ==========================================
+# Icon 1: streamline-ultimate:dice-bold (Logo Navbar)
+# Icon 2: basil:notification-on-solid (Notification)
 st.markdown("""
 <div class="nav-container">
     <div class="nav-logo">
-        <div class="nav-logo-icon">💠</div>
+        <div class="nav-logo-icon">
+            <span class="iconify" data-icon="streamline-ultimate:dice-bold"></span>
+        </div>
         <div>
             <div class="nav-title">SUPERVISION DASHBOARD</div>
             <div class="nav-subtitle">Bank Indonesia • DPPK / PUVA</div>
@@ -103,7 +108,7 @@ st.markdown("""
         <div class="nav-item">OIS</div>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
-        <span style="font-size: 18px; cursor: pointer;">🔔</span>
+        <span class="iconify" data-icon="basil:notification-on-solid" style="font-size: 22px; cursor: pointer; color: #64748b;"></span>
         <div style="display: flex; align-items: center; gap: 12px;">
             <div style="background: #e2e8f0; color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">👤</div>
             <div>
@@ -208,7 +213,6 @@ jumlah_bermasalah = total_lenders - lender_patuh_count
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
-# -- Template Styling agar 100% Seragam --
 LABEL_HTML = '<div style="color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">{}</div>'
 VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; margin-bottom: 15px;">{}</div>'
 
@@ -232,7 +236,6 @@ with col_donut:
             textinfo='none', hoverinfo='label+value'
         )])
 
-        # Height di-set 80 agar tingginya pas menyamai teks angka metrik di sebelahnya
         fig_donut.update_layout(
             showlegend=False,
             margin=dict(t=0, b=0, l=0, r=0), height=80, 
@@ -262,8 +265,9 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
     
+
 # ==========================================
-# 8. CHARTS
+# 8. CHARTS (LEADERBOARD VOLUME & INCLUSIVITY)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -278,9 +282,10 @@ df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum()
 df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
 df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
+# Icon 3: fluent-emoji-high-contrast:coin (Leaderboard Volume)
 with col_chart1:
     with st.container(border=True):
-        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px;'>🏆 Bank dengan Volume Transaksi Terbesar (Triliun Rp)</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'><span class=\"iconify\" data-icon=\"fluent-emoji-high-contrast:coin\" style='font-size: 18px;'></span> Bank dengan Volume Transaksi Terbesar (Triliun Rp)</div>", unsafe_allow_html=True)
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         fig1.update_layout(**CHART_BASE)
@@ -296,9 +301,10 @@ df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].
 df_inklusif.columns = ['LENDER', 'Score']
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
+# Icon 4: carbon:help-desk (Inclusivity Icon)
 with col_chart2:
     with st.container(border=True):
-        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px;'>🌐 Apresiasi Inklusivitas Transaksi (Risk-Taking)</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'><span class=\"iconify\" data-icon=\"carbon:help-desk\" style='font-size: 18px;'></span> Apresiasi Inklusivitas Transaksi (Risk-Taking)</div>", unsafe_allow_html=True)
         
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         fig2.update_layout(**CHART_BASE)
@@ -312,12 +318,13 @@ with col_chart2:
 # ==========================================
 # 9. NETWORK GRAPH
 # ==========================================
+# Icon 5: lucide-lab:spider-web (Peta Jaringan Icon)
 st.write("")
 with st.container(border=True):
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
-        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px;'>🕸️ Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'><span class=\"iconify\" data-icon=\"lucide-lab:spider-web\" style='font-size: 20px;'></span> Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
         st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
     with col_filter_net:

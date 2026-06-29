@@ -113,13 +113,23 @@ st.markdown(f"""
 
 
 # ==========================================
-# 5. FUNGSI LOAD DATA EXCEL
+# 5. FUNGSI LOAD DATA EXCEL (UPDATED UNTUK SECRETS)
 # ==========================================
 @st.cache_data
 def load_excel_data():
-    filename = "Data Repo - Masked .xlsx"
     try:
-        xls = pd.ExcelFile(filename)
+        # Ambil link dari Streamlit Secrets
+        raw_url = st.secrets["DATA_LINK"]
+        
+        # Konversi Link GDrive biasa menjadi link Direct Download agar bisa dibaca Pandas
+        if "drive.google.com/file/d/" in raw_url:
+            file_id = raw_url.split("/d/")[1].split("/")[0]
+            download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+        else:
+            download_url = raw_url
+
+        # Pandas membaca file excel langsung dari URL
+        xls = pd.ExcelFile(download_url)
         sheets_dict = {}
         
         for sheet_name in xls.sheet_names:
@@ -374,7 +384,7 @@ with st.container(border=True):
 
         edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=0.5, color='#cbd5e1'), hoverinfo='none', mode='lines')
 
-        node_x, node_y, node_color, node_size = [], [], [], []
+        node_x, node_y, node_color, node_size = [], [], []
         for node in G.nodes():
             x, y = pos[node]
             node_x.append(x); node_y.append(y)

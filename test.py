@@ -328,7 +328,6 @@ with col_chart2:
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
-
 # ==========================================
 # 10. NETWORK GRAPH
 # ==========================================
@@ -385,7 +384,10 @@ with st.container(border=True):
 
         edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=0.5, color='#cbd5e1'), hoverinfo='none', mode='lines')
 
-        node_x, node_y, node_color, node_size = [], [], []
+        # === INI BAGIAN YANG DIPERBAIKI (DITAMBAH 1 KURUNG SIKU KOSONG) ===
+        node_x, node_y, node_color, node_size = [], [], [], []
+        # ================================================================
+        
         for node in G.nodes():
             x, y = pos[node]
             node_x.append(x); node_y.append(y)

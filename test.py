@@ -196,22 +196,6 @@ st.write("")
 # 7. PERHITUNGAN KPI UMUM (DEBUG VERSION)
 # ==========================================
 
-# Tampilkan kolom yang terbaca agar kita bisa melihat "wujud aslinya"
-st.write("DEBUG INFO: Kolom yang tersedia di DataFrame saat ini:")
-st.write(df.columns.tolist())
-
-# Cek apakah kolom yang kamu maksud benar-benar ada dalam list di atas
-kolom_kunci = 'SANDI CASH BORROWER (Masked)'
-is_found = kolom_kunci in df.columns
-
-if not is_found:
-    st.error(f"⚠️ Kolom '{kolom_kunci}' TIDAK DITEMUKAN. Python membacanya sebagai nama lain.")
-    st.stop()
-else:
-    # (Kode asli kamu setelah ini dilanjutkan jika sudah aman)
-    lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'STATUS'})
-    borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'STATUS'})
-    # ... (lanjutkan kode kamu)
 # A. Buat Master Map Status Bank
 lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'STATUS'})
 borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'STATUS'})

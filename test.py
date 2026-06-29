@@ -209,60 +209,59 @@ jumlah_bermasalah = total_lenders - lender_patuh_count
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
+# -- Template Styling agar 100% Seragam --
+LABEL_HTML = '<div style="color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">{}</div>'
+VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; margin-bottom: 15px;">{}</div>'
+
+# KARTU 1: KOMPOSISI EKOSISTEM (DONUT CHART)
 with col_donut:
-    # --- Data Statis Sesuai Permintaan ---
-    total_banks = 105
-    du_count = 21
-    non_du_count = 84
+    with st.container(border=True):
+        st.markdown(LABEL_HTML.format("Komposisi Ekosistem"), unsafe_allow_html=True)
+        
+        total_banks = 105
+        du_count = 21
+        non_du_count = 84
+        
+        donut_labels = ['DU', 'Non-DU', '']
+        donut_values = [du_count, non_du_count, total_banks] 
+        donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
 
-    # --- 1. JUDUL DOUGHNUT ---
-    # margin-top di bawah ini mengatur seberapa jauh judul turun.
-    st.markdown("""
-        <div style="
-            color: #64748b; 
-            font-weight: 700; 
-            font-size: 12px; 
-            text-transform: uppercase;
-            margin-top: 0px; 
-            margin-bottom: -20px;
-            margin-left: 5px;
-        ">
-            Komposisi Ekosistem
-        </div>
-    """, unsafe_allow_html=True)
+        fig_donut = go.Figure(data=[go.Pie(
+            labels=donut_labels, values=donut_values, hole=0.75,
+            rotation=270, direction='clockwise', sort=False,
+            marker=dict(colors=donut_colors, line=dict(color='#ffffff', width=2)),
+            textinfo='none', hoverinfo='label+value'
+        )])
 
-    # --- 2. GRAFIK DOUGHNUT ---
-    donut_labels = ['DU', 'Non-DU', '']
-    donut_values = [du_count, non_du_count, total_banks] 
-    donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
+        # Height di-set 80 agar tingginya pas menyamai teks angka metrik di sebelahnya
+        fig_donut.update_layout(
+            showlegend=False,
+            margin=dict(t=0, b=0, l=0, r=0), height=80, 
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            annotations=[dict(
+                text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:11px; font-weight:600; color:#64748b;'>Bank</span>", 
+                x=0.5, y=0.15, showarrow=False
+            )]
+        )
+        st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
-    fig_donut = go.Figure(data=[go.Pie(
-        labels=donut_labels, values=donut_values, hole=0.75,
-        rotation=270, direction='clockwise', sort=False,
-        marker=dict(colors=donut_colors, line=dict(color='#ffffff', width=2)),
-        textinfo='none', hoverinfo='label+value'
-    )])
-
-    # Margin 't' (top) mengatur seberapa jauh chart turun menjauhi judul
-    fig_donut.update_layout(
-        showlegend=False,
-        margin=dict(t=20, b=0, l=15, r=15), height=110, 
-        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        annotations=[dict(
-            text=f"<span style='font-size:20px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:12px; font-weight:600; color:#64748b;'>Bank</span>", 
-            x=0.5, y=0.15, showarrow=False
-        )]
-    )
-    
-    st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
-
-# --- 3. METRIK CARD ---
+# KARTU 2: TOTAL VOLUME
 with c1:
-    st.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
+    with st.container(border=True):
+        st.markdown(LABEL_HTML.format("Total Volume DU (Repo)"), unsafe_allow_html=True)
+        st.markdown(VALUE_HTML.format(f"Rp {total_volume_t:.2f} T"), unsafe_allow_html=True)
+
+# KARTU 3: RATA-RATA KEPATUHAN
 with c2:
-    st.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
+    with st.container(border=True):
+        st.markdown(LABEL_HTML.format("Rata-rata Kepatuhan"), unsafe_allow_html=True)
+        st.markdown(VALUE_HTML.format(f"{avg_kepatuhan:.1f}%"), unsafe_allow_html=True)
+
+# KARTU 4: BANK TIDAK PATUH
 with c3:
-    st.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
+    with st.container(border=True):
+        st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
+        st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
     
 # ==========================================
 # 8. CHARTS

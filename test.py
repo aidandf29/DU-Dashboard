@@ -260,14 +260,10 @@ with col_chart2:
 # ==========================================
 st.write("")
 with st.container(border=True):
+    st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px;'>🕸️ Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
     
-    st.markdown("""
-    <div style='color: #0f172a !important; font-size: 13px !important; font-weight: 500; margin-bottom: 15px;'>
-        <span style='color: #1e3a5f !important; font-size: 16px;'>●</span> Biru tua = DU 
-        &nbsp;&nbsp;&nbsp;&nbsp; 
-        <span style='color: #0ea5e9 !important; font-size: 16px;'>●</span> Biru muda = Non DU
-    </div>
-    """, unsafe_allow_html=True)
+    # Legenda baru: Tanpa icon/simbol, hanya teks polos yang rapi
+    st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
 
     

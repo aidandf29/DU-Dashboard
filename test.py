@@ -43,6 +43,9 @@ st.markdown("""
 [data-testid="stHeader"] { display: none !important; }
 footer { display: none !important; }
 
+/* HAPUS ICON LINK (RANTAI) PADA JUDUL */
+.header-anchor { display: none !important; }
+
 /* LEBARKAN KONTEN & HAPUS BACKGROUND */
 .block-container {
     max-width: 100% !important; 
@@ -77,7 +80,7 @@ footer { display: none !important; }
 .nav-menu { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
 .nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.nav-item.disabled { color: #94a3b8; cursor: not-allowed; } /* Class khusus untuk tombol belum aktif */
+.nav-item.disabled { color: #94a3b8; cursor: not-allowed; } 
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #64748b; font-weight: 500; }
 </style>
@@ -87,7 +90,6 @@ footer { display: none !important; }
 # ==========================================
 # 4. HTML NAVBAR CUSTOM
 # ==========================================
-# SRBI dan OIS diubah menggunakan title (tooltip HTML asli) dan CSS class disabled
 st.markdown(f"""
 <div class="nav-container">
 <div class="nav-logo">
@@ -281,13 +283,11 @@ with col_chart1:
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         fig1.update_layout(**CHART_BASE)
         
-        # PERBAIKAN 1: Memperlebar range axis X sebesar 25% (1.25) agar teks tidak terpotong
         max_vol = df_vol['NOMINAL (TRILIUN)'].max()
         fig1.update_xaxes(range=[0, max_vol * 1.25])
         
         colors1 = ['#bfdbfe'] * 6 + ['#1e3a5f']
         
-        # PERBAIKAN 2: cliponaxis=False memastikan teks yang keluar area axis tetap terender
         fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
@@ -310,7 +310,6 @@ with col_chart2:
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         fig2.update_layout(**CHART_BASE)
         
-        # Diaplikasikan juga ke chart kedua untuk berjaga-jaga
         max_score = df_inklusif['Score'].max()
         fig2.update_xaxes(range=[0, max_score * 1.25])
         

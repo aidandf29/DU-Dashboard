@@ -220,28 +220,35 @@ with col_donut:
     donut_values = [du_count, non_du_count, total_banks] 
     donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
 
+    # Memperbesar 'hole' menjadi 0.75 agar doughnut lebih tipis dan tidak terkesan kebesaran
     fig_donut = go.Figure(data=[go.Pie(
-        labels=donut_labels, values=donut_values, hole=0.65,
+        labels=donut_labels, values=donut_values, hole=0.75,
         rotation=270, direction='clockwise', sort=False,
         marker=dict(colors=donut_colors, line=dict(color='#ffffff', width=2)),
         textinfo='none', hoverinfo='label+value'
     )])
 
+    # Mengecilkan tinggi (height: 105) dan menyesuaikan margin teks tengah
     fig_donut.update_layout(
         showlegend=False,
-        # Margin atas dikurangi agar chart lebih naik dan sejajar dengan angka metrik
-        margin=dict(t=0, b=0, l=0, r=0), height=125, 
+        margin=dict(t=5, b=0, l=15, r=15), height=105, 
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        annotations=[dict(text=f"<b>{total_banks}</b><br>Bank", x=0.5, y=0.15, font_size=16, showarrow=False, font=dict(color="#0f172a"))]
+        annotations=[dict(
+            text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:12px; font-weight:600; color:#64748b;'>Bank</span>", 
+            x=0.5, y=0.15, showarrow=False
+        )]
     )
     
-    # Judul disamakan persis dengan label metric bawaan Streamlit (tanpa container kotak)
+    # Styling teks disamakan PERSIS dengan CSS metric bawaan Streamlit
     st.markdown("""
         <div style="
-            color: rgba(49, 51, 63, 0.8); 
-            font-size: 14px; 
-            margin-bottom: -15px; 
-            margin-top: 5px;
+            color: #64748b; 
+            font-weight: 700; 
+            font-size: 12px; 
+            text-transform: uppercase;
+            margin-top: 15px; 
+            margin-bottom: -10px;
+            margin-left: 5px;
         ">
             Komposisi Ekosistem
         </div>
@@ -253,7 +260,6 @@ with col_donut:
 c1.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
 c2.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
 c3.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
-
 
 # ==========================================
 # 8. CHARTS

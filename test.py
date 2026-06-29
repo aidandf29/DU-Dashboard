@@ -50,7 +50,6 @@ footer { display: none !important; }
 }
 [data-testid="stMetricValue"] {
     color: #0f172a !important;
-
     font-size: 26px !important;
     font-weight: 800 !important;
 }
@@ -64,7 +63,7 @@ footer { display: none !important; }
     padding: 15px !important;
 }
 
-/* 5. CUSTOM NAVBAR - WARNA TEKS DIBUAT GELAP UTAMA AGAR TERBACA */
+/* 5. CUSTOM NAVBAR */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
@@ -79,7 +78,6 @@ footer { display: none !important; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #64748b; font-weight: 500; }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -117,7 +115,7 @@ st.markdown("""
 
 
 # ==========================================
-# 4. FUNGSI LOAD DATA EXCEL (MEMBACA SEMUA SHEET)
+# 4. FUNGSI LOAD DATA EXCEL
 # ==========================================
 @st.cache_data
 def load_excel_data():
@@ -139,6 +137,10 @@ def load_excel_data():
                 df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip()
                 df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].replace('NON-DU', 'NON DU')
                 
+            # Pastikan kolom tanggal berformat Datetime
+            if 'TANGGAL TRANSAKSI' in df.columns:
+                df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'], errors='coerce')
+                
             sheets_dict[sheet_name] = df
         return sheets_dict
     except Exception as e:
@@ -149,70 +151,107 @@ sheets_data = load_excel_data()
 
 
 # ==========================================
-# 5. HERO TEXT (DINAMIS DARI TANGGAL TRANSAKSI)
+# 5. HERO TEXT & DROPDOWN PERIODE
 # ==========================================
-# Pastikan kolom tanggal diformat sebagai datetime
-df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'])
-min_date = df['TANGGAL TRANSAKSI'].min().strftime('%d %b %Y')
-max_date = df['TANGGAL TRANSAKSI'].max().strftime('%d %b %Y')
-
+# Susun Layout Kolom
 col_hero, col_filter = st.columns([4, 1])
+
+if sheets_data is not None:
+    daftar_periode = list(sheets_data.keys())
+else:
+    daftar_periode = ["2026 H1", "2025 H2", "2025 H1"] 
+
+# Render Filter ditaruh di atas hero supaya kita dapat dataframe lebih awal
+with col_filter:
+    st.write("") 
+    selected_period = st.selectbox("Periode", daftar_periode, label_visibility="collapsed")
+
+if sheets_data is None: 
+    st.stop()
+
+# Ambil data terpilih
+df = sheets_data[selected_period]
+
+# Hitung TANGGAL MIN dan MAX untuk Hero Teks
+if 'TANGGAL TRANSAKSI' in df.columns and not df['TANGGAL TRANSAKSI'].isnull().all():
+    min_date = df['TANGGAL TRANSAKSI'].min().strftime('%d %b %Y')
+    max_date = df['TANGGAL TRANSAKSI'].max().strftime('%d %b %Y')
+    periode_teks = f"Periode Transaksi: {min_date} - {max_date}"
+else:
+    periode_teks = "Periode Transaksi: Data tanggal tidak tersedia"
 
 with col_hero:
     st.markdown(f"""
     <div style="font-family: 'Inter', sans-serif;">
         <h1 style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pimpinan</h1>
-        <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">Periode Data: {min_date} s.d. {max_date}</p>
+        <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">{periode_teks}</p>
     </div>
     """, unsafe_allow_html=True)
+st.write("")
 
-with col_filter:
-    st.write("") 
-    selected_period = st.selectbox("Periode", daftar_periode, label_visibility="collapsed")
 
 # ==========================================
-# 6. PERHITUNGAN KPI (BARU)
+# 6. PERHITUNGAN KPI UMUM & DONUT CHART DATA
 # ==========================================
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# Hitung Kepatuhan
 cp_stats = df.groupby(['SANDI CASH LENDER (Masked)', 'STATUS PD CASH BORROWER'])['SANDI CASH BORROWER (Masked)'].nunique().unstack(fill_value=0)
 if 'DU' not in cp_stats.columns: cp_stats['DU'] = 0
 if 'NON DU' not in cp_stats.columns: cp_stats['NON DU'] = 0
-cp_stats['Patuh'] = (cp_stats['DU'] >= 5) & (cp_stats['NON DU'] >= 5)
 
+cp_stats['Patuh'] = (cp_stats['DU'] >= 5) & (cp_stats['NON DU'] >= 5)
 total_lenders = len(cp_stats)
 lender_patuh_count = cp_stats['Patuh'].sum()
 avg_kepatuhan = (lender_patuh_count / total_lenders) * 100 if total_lenders > 0 else 0
 jumlah_bermasalah = total_lenders - lender_patuh_count
 
-# ==========================================
-# 7. KPI CARDS & HALF DONUT CHART
-# ==========================================
-# Kita buat 4 kolom: 1 untuk chart, 3 untuk metric
-c_chart, c1, c2, c3 = st.columns([1, 1, 1, 1])
+# Menghitung DU / NON-DU dari seluruh Unique Bank (Pemberi & Peminjam)
+lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'})
+borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID_BANK', 'STATUS PD CASH BORROWER': 'STATUS'})
+all_mapping_status = pd.concat([lender_map, borrower_map]).dropna()
+all_mapping_status['STATUS'] = all_mapping_status['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
 
-# A. Half Donut Chart untuk Komposisi DU/Non-DU
-with c_chart:
-    st.markdown("<div style='font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 5px;'>KOMPOSISI BANK</div>", unsafe_allow_html=True)
+# Jika bank pernah tercatat "DU", maka dilabeli "DU"
+bank_status_dict = all_mapping_status.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
+total_banks = len(bank_status_dict)
+du_count = sum(1 for s in bank_status_dict.values() if s == 'DU')
+non_du_count = total_banks - du_count
+
+
+# ==========================================
+# 7. KPI CARDS + HALF DOUGHNUT CHART
+# ==========================================
+# Set Chart Doughnut (Kiri), lalu 3 Metrics standar
+col_donut, c1, c2, c3 = st.columns([1.2, 1, 1, 1])
+
+with col_donut:
+    # Buat Half Doughnut Chart (Setengah lingkaran pakai Plotly Trick)
+    donut_labels = ['DU', 'Non-DU', '']
+    donut_values = [du_count, non_du_count, total_banks] # Elemen ke-3 = setengah total (hidden)
+    donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
+
     fig_donut = go.Figure(data=[go.Pie(
-        labels=['DU', 'Non DU'], 
-        values=[21, 84], 
-        hole=.6,
-        marker_colors=['#1e3a5f', '#bfdbfe'],
-        rotation=90,
-        direction='clockwise',
-        sort=False
+        labels=donut_labels, values=donut_values, hole=0.65,
+        rotation=270, direction='clockwise', sort=False,
+        marker=dict(colors=donut_colors, line=dict(color='#ffffff', width=2)),
+        textinfo='none', hoverinfo='label+value'
     )])
-    fig_donut.update_layout(height=120, margin=dict(t=0, b=0, l=0, r=0), showlegend=False)
-    # Trik "Half Donut" dengan menyembunyikan bagian bawah
-    fig_donut.update_traces(textinfo='none') 
-    st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
-# B. Sisa Metrics
-c1.metric("Total Volume DU", f"Rp {total_volume_t:.2f} T")
+    fig_donut.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0), height=120,
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        annotations=[dict(text=f"<b>{total_banks}</b><br>Bank", x=0.5, y=0.15, font_size=16, showarrow=False, font=dict(color="#0f172a"))]
+    )
+    
+    with st.container(border=True):
+        st.markdown("<div style='text-align:center; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;'>Komposisi Ekosistem</div>", unsafe_allow_html=True)
+        st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+
+c1.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
 c2.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
 c3.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
+
 
 # ==========================================
 # 8. CHARTS
@@ -261,49 +300,30 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 
-
 # ==========================================
 # 9. NETWORK GRAPH (LOGIKA PEWARNAAN BERDASARKAN KOLOM STATUS)
 # ==========================================
 st.write("")
 with st.container(border=True):
-    # Membagi area atas menjadi dua kolom: Kiri untuk Judul, Kanan untuk Filter
-    col_title, col_filter = st.columns([3, 1])
+    col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
         st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px;'>🕸️ Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
         st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
-    with col_filter:
-        # 1. Ambil daftar semua bank unik
+    with col_filter_net:
         all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
         all_banks_sorted = sorted(list(all_banks))
         
-        # 2. Dropdown ditaruh di sini dengan label yang disembunyikan (collapsed)
-        st.write("") # Sedikit spasi agar sejajar dengan judul
+        st.write("") 
         selected_bank = st.selectbox(
             "Filter Bank", 
             ["Semua Bank"] + all_banks_sorted, 
             label_visibility="collapsed"
         )
     
-    # 3. Buat pemetaan status bank (ID Bank -> Status)
-    lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(
-        columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'}
-    )
-    borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(
-        columns={'SANDI CASH BORROWER (Masked)': 'ID_BANK', 'STATUS PD CASH BORROWER': 'STATUS'}
-    )
-    all_mapping = pd.concat([lender_map, borrower_map])
-    all_mapping['STATUS'] = all_mapping['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
-    
-    # Jika bank punya status DU, maka labelnya DU
-    bank_status_dict = all_mapping.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
-
-    # 4. Ambil semua relasi unik
     df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
     
-    # --- LOGIKA FILTERING ---
     if selected_bank != "Semua Bank":
         df_edges = df_edges[
             (df_edges['SANDI CASH LENDER (Masked)'] == selected_bank) | 
@@ -313,9 +333,7 @@ with st.container(border=True):
     if df_edges.empty:
         st.info(f"Tidak ada transaksi untuk {selected_bank} pada periode ini.")
     else:
-        # 5. Buat Graph
         G = nx.from_pandas_edgelist(df_edges, 'SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)')
-        
         pos = nx.spring_layout(G, seed=42, k=0.15)
 
         edge_x, edge_y = [], []
@@ -327,12 +345,12 @@ with st.container(border=True):
 
         edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=0.5, color='#cbd5e1'), hoverinfo='none', mode='lines')
 
-        # 6. Pewarnaan dan Ukuran Node
         node_x, node_y, node_color, node_size = [], [], [], []
         for node in G.nodes():
             x, y = pos[node]
             node_x.append(x); node_y.append(y)
             
+            # Memakai dictionary status yang sama dengan kalkulasi di atas
             status = bank_status_dict.get(str(node), 'NON DU')
             
             if status == 'DU':

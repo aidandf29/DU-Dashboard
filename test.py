@@ -215,12 +215,27 @@ with col_donut:
     du_count = 21
     non_du_count = 84
 
-    # Chart Setup
+    # --- 1. JUDUL DOUGHNUT ---
+    # margin-top di bawah ini mengatur seberapa jauh judul turun.
+    st.markdown("""
+        <div style="
+            color: #64748b; 
+            font-weight: 700; 
+            font-size: 12px; 
+            text-transform: uppercase;
+            margin-top: 0px; 
+            margin-bottom: -20px;
+            margin-left: 5px;
+        ">
+            Komposisi Ekosistem
+        </div>
+    """, unsafe_allow_html=True)
+
+    # --- 2. GRAFIK DOUGHNUT ---
     donut_labels = ['DU', 'Non-DU', '']
     donut_values = [du_count, non_du_count, total_banks] 
     donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
 
-    # Memperbesar 'hole' menjadi 0.75 agar doughnut lebih tipis dan tidak terkesan kebesaran
     fig_donut = go.Figure(data=[go.Pie(
         labels=donut_labels, values=donut_values, hole=0.75,
         rotation=270, direction='clockwise', sort=False,
@@ -228,39 +243,27 @@ with col_donut:
         textinfo='none', hoverinfo='label+value'
     )])
 
-    # Mengecilkan tinggi (height: 105) dan menyesuaikan margin teks tengah
+    # Margin 't' (top) mengatur seberapa jauh chart turun menjauhi judul
     fig_donut.update_layout(
         showlegend=False,
-        margin=dict(t=5, b=0, l=15, r=15), height=105, 
+        margin=dict(t=20, b=0, l=15, r=15), height=110, 
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         annotations=[dict(
-            text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:12px; font-weight:600; color:#64748b;'>Bank</span>", 
+            text=f"<span style='font-size:20px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:12px; font-weight:600; color:#64748b;'>Bank</span>", 
             x=0.5, y=0.15, showarrow=False
         )]
     )
     
-    # Styling teks disamakan PERSIS dengan CSS metric bawaan Streamlit
-    st.markdown("""
-        <div style="
-            color: #64748b; 
-            font-weight: 700; 
-            font-size: 12px; 
-            text-transform: uppercase;
-            margin-top: 15px; 
-            margin-bottom: -10px;
-            margin-left: 5px;
-        ">
-            Komposisi Ekosistem
-        </div>
-    """, unsafe_allow_html=True)
-    
     st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
-# Metrik lainnya
-c1.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
-c2.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
-c3.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
-
+# --- 3. METRIK CARD ---
+with c1:
+    st.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")
+with c2:
+    st.metric("Rata-rata Kepatuhan", f"{avg_kepatuhan:.1f}%")
+with c3:
+    st.metric("Bank Tidak Patuh", f"{jumlah_bermasalah} Bank")
+    
 # ==========================================
 # 8. CHARTS
 # ==========================================

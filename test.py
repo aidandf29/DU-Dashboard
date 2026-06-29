@@ -16,25 +16,20 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. KONFIGURASI ICON CUSTOM (Ubah Ukuran & Warna Di Sini)
+# 2. KONFIGURASI ICON CUSTOM 
 # ==========================================
-# 1. Logo Navbar (Dice) 
 ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
 ICON_LOGO_SIZE = 32
 
-# 2. Icon Notifikasi (Bell)
 ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"
 ICON_NOTIF_SIZE = 28
 
-# 3. Icon Leaderboard Volume (Coin)
 ICON_VOLUME_URL = "https://api.iconify.design/fluent-emoji-high-contrast/coin.svg?color=%230f172a"
 ICON_VOLUME_SIZE = 22
 
-# 4. Icon Inklusivitas (Help Desk)
 ICON_INKLUSIF_URL = "https://api.iconify.design/carbon/help-desk.svg?color=%230f172a"
 ICON_INKLUSIF_SIZE = 22
 
-# 5. Icon Peta Jaringan (Spider Web)
 ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
 ICON_NET_SIZE = 24
 
@@ -44,11 +39,11 @@ ICON_NET_SIZE = 24
 # ==========================================
 st.markdown("""
 <style>
-/* 1. HAPUS HEADER BAWAAN STREAMLIT */
+/* HAPUS HEADER BAWAAN STREAMLIT */
 [data-testid="stHeader"] { display: none !important; }
 footer { display: none !important; }
 
-/* 2. LEBARKAN KONTEN & HAPUS BACKGROUND YANG BIKIN ERROR */
+/* LEBARKAN KONTEN & HAPUS BACKGROUND */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -58,7 +53,7 @@ footer { display: none !important; }
 }
 .stApp { background-color: #f8fafc !important; }
 
-/* 3. DESAIN KARTU UNIFIED (METRIC & CONTAINER GRAFIK) */
+/* DESAIN KARTU UNIFIED */
 [data-testid="metric-container"],
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
@@ -70,7 +65,7 @@ footer { display: none !important; }
 [data-testid="metric-container"] { padding: 15px 20px !important; }
 [data-testid="stVerticalBlockBorderWrapper"] { padding: 15px !important; }
 
-/* 4. CUSTOM NAVBAR */
+/* CUSTOM NAVBAR */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
@@ -80,8 +75,9 @@ footer { display: none !important; }
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
 .nav-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
 .nav-menu { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
-.nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; }
+.nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.nav-item.disabled { color: #94a3b8; cursor: not-allowed; } /* Class khusus untuk tombol belum aktif */
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #64748b; font-weight: 500; }
 </style>
@@ -89,8 +85,9 @@ footer { display: none !important; }
 
 
 # ==========================================
-# 4. HTML NAVBAR CUSTOM (Dengan Popup Alert)
+# 4. HTML NAVBAR CUSTOM
 # ==========================================
+# SRBI dan OIS diubah menggunakan title (tooltip HTML asli) dan CSS class disabled
 st.markdown(f"""
 <div class="nav-container">
 <div class="nav-logo">
@@ -99,8 +96,8 @@ st.markdown(f"""
 </div>
 <div class="nav-menu">
 <div class="nav-item active">REPO</div>
-<div class="nav-item" onclick="alert('Fitur SRBI sedang dalam pengembangan 🚧');">SRBI</div>
-<div class="nav-item" onclick="alert('Fitur OIS sedang dalam pengembangan 🚧');">OIS</div>
+<div class="nav-item disabled" title="Fitur SRBI sedang dalam pengembangan 🚧">SRBI</div>
+<div class="nav-item disabled" title="Fitur OIS sedang dalam pengembangan 🚧">OIS</div>
 </div>
 <div style="display: flex; align-items: center; gap: 20px;">
 <img src="{ICON_NOTIF_URL}&width={ICON_NOTIF_SIZE}&height={ICON_NOTIF_SIZE}" style="cursor: pointer; flex-shrink: 0;">
@@ -219,8 +216,6 @@ with col_donut:
         donut_labels = ['DU', 'Non-DU', '']
         donut_values = [du_count, non_du_count, total_banks] 
         donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
-        
-        # Array untuk menghilangkan garis batas putih (border) pada potongan pie yang transparan
         line_colors = ['#ffffff', '#ffffff', 'rgba(0,0,0,0)']
         line_widths = [2, 2, 0]
 
@@ -231,7 +226,6 @@ with col_donut:
             textinfo='none', hoverinfo='label+value'
         )])
 
-        # margin right (r=60) ditambahkan untuk mendorong chart menempel ke sisi kiri
         fig_donut.update_layout(
             showlegend=False,
             margin=dict(t=0, b=0, l=0, r=60), height=80, 
@@ -286,9 +280,15 @@ with col_chart1:
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         fig1.update_layout(**CHART_BASE)
+        
+        # PERBAIKAN 1: Memperlebar range axis X sebesar 25% (1.25) agar teks tidak terpotong
+        max_vol = df_vol['NOMINAL (TRILIUN)'].max()
+        fig1.update_xaxes(range=[0, max_vol * 1.25])
+        
         colors1 = ['#bfdbfe'] * 6 + ['#1e3a5f']
         
-        fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"))
+        # PERBAIKAN 2: cliponaxis=False memastikan teks yang keluar area axis tetap terender
+        fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
 
@@ -309,9 +309,14 @@ with col_chart2:
         
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         fig2.update_layout(**CHART_BASE)
+        
+        # Diaplikasikan juga ke chart kedua untuk berjaga-jaga
+        max_score = df_inklusif['Score'].max()
+        fig2.update_xaxes(range=[0, max_score * 1.25])
+        
         colors2 = ['#bfdbfe'] * 6 + ['#1e3a5f']
         
-        fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"))
+        fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 

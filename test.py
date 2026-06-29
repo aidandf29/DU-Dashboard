@@ -265,8 +265,6 @@ with st.container(border=True):
     # Legenda baru: Tanpa icon/simbol, hanya teks polos yang rapi
     st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
-
-    
     # 1. Buat pemetaan status bank (ID Bank -> Status)
     lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(
         columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'}
@@ -280,9 +278,13 @@ with st.container(border=True):
     # Jika bank punya status DU, maka labelnya DU
     bank_status_dict = all_mapping.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
 
-    # 2. Buat Graph
-    G = nx.from_pandas_edgelist(df.head(80), 'SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)')
-    pos = nx.spring_layout(G, seed=42)
+    # 2. Buat Graph (PERBAIKAN: Gunakan seluruh relasi unik, jangan dipotong 80 baris)
+    df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
+    G = nx.from_pandas_edgelist(df_edges, 'SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)')
+    
+    # Menggunakan spring_layout dengan parameter k (jarak antar node) yang disesuaikan
+    # Semakin besar data, jaraknya diatur agar tidak terlalu menumpuk
+    pos = nx.spring_layout(G, seed=42, k=0.15)
 
     edge_x, edge_y = [], []
     for edge in G.edges():
@@ -321,6 +323,6 @@ with st.container(border=True):
         layout=go.Layout(showlegend=False, hovermode='closest', margin=dict(b=0, l=0, r=0, t=0),
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=350)
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=500) # Tinggi grafik dinaikkan agar lebih luas
     )
     st.plotly_chart(fig_net, use_container_width=True, config={'displayModeBar': False})

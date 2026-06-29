@@ -89,7 +89,7 @@ footer { display: none !important; }
 
 
 # ==========================================
-# 4. HTML NAVBAR CUSTOM (Request Ukuran Langsung ke API Iconify)
+# 4. HTML NAVBAR CUSTOM (Dengan Popup Alert)
 # ==========================================
 st.markdown(f"""
 <div class="nav-container">
@@ -99,8 +99,8 @@ st.markdown(f"""
 </div>
 <div class="nav-menu">
 <div class="nav-item active">REPO</div>
-<div class="nav-item">SRBI</div>
-<div class="nav-item">OIS</div>
+<div class="nav-item" onclick="alert('Fitur SRBI sedang dalam pengembangan 🚧');">SRBI</div>
+<div class="nav-item" onclick="alert('Fitur OIS sedang dalam pengembangan 🚧');">OIS</div>
 </div>
 <div style="display: flex; align-items: center; gap: 20px;">
 <img src="{ICON_NOTIF_URL}&width={ICON_NOTIF_SIZE}&height={ICON_NOTIF_SIZE}" style="cursor: pointer; flex-shrink: 0;">
@@ -219,17 +219,22 @@ with col_donut:
         donut_labels = ['DU', 'Non-DU', '']
         donut_values = [du_count, non_du_count, total_banks] 
         donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
+        
+        # Array untuk menghilangkan garis batas putih (border) pada potongan pie yang transparan
+        line_colors = ['#ffffff', '#ffffff', 'rgba(0,0,0,0)']
+        line_widths = [2, 2, 0]
 
         fig_donut = go.Figure(data=[go.Pie(
             labels=donut_labels, values=donut_values, hole=0.75,
             rotation=270, direction='clockwise', sort=False,
-            marker=dict(colors=donut_colors, line=dict(color='#ffffff', width=2)),
+            marker=dict(colors=donut_colors, line=dict(color=line_colors, width=line_widths)),
             textinfo='none', hoverinfo='label+value'
         )])
 
+        # margin right (r=60) ditambahkan untuk mendorong chart menempel ke sisi kiri
         fig_donut.update_layout(
             showlegend=False,
-            margin=dict(t=0, b=0, l=0, r=0), height=80, 
+            margin=dict(t=0, b=0, l=0, r=60), height=80, 
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             annotations=[dict(
                 text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:11px; font-weight:600; color:#64748b;'>Bank</span>", 

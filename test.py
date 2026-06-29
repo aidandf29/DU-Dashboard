@@ -23,7 +23,7 @@ st.set_page_config(
 
 # 1. Logo Navbar (Dice) 
 ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
-ICON_LOGO_SIZE = 32
+ICON_LOGO_SIZE = 132
 
 # 2. Icon Notifikasi (Bell)
 ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"

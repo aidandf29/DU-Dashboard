@@ -21,25 +21,25 @@ st.set_page_config(
 # Catatan: Untuk mengubah warna, ganti nilai kode HEX setelah tulisan "%23" 
 # (Misal: %231e3a5f artinya warna #1e3a5f)
 
-# 1. Logo Navbar (Dice) - Dihilangkan background-nya di CSS
+# 1. Logo Navbar (Dice) 
 ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
-ICON_LOGO_SIZE = 92
+ICON_LOGO_SIZE = 32
 
 # 2. Icon Notifikasi (Bell)
 ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"
-ICON_NOTIF_SIZE = 38
+ICON_NOTIF_SIZE = 28
 
 # 3. Icon Leaderboard Volume (Coin)
 ICON_VOLUME_URL = "https://api.iconify.design/fluent-emoji-high-contrast/coin.svg?color=%230f172a"
-ICON_VOLUME_SIZE = 38
+ICON_VOLUME_SIZE = 22
 
 # 4. Icon Inklusivitas (Help Desk)
 ICON_INKLUSIF_URL = "https://api.iconify.design/carbon/help-desk.svg?color=%230f172a"
-ICON_INKLUSIF_SIZE = 38
+ICON_INKLUSIF_SIZE = 22
 
 # 5. Icon Peta Jaringan (Spider Web)
 ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
-ICON_NET_SIZE = 38
+ICON_NET_SIZE = 24
 
 
 # ==========================================
@@ -81,7 +81,7 @@ footer { display: none !important; }
 }
 .nav-logo { display: flex; align-items: center; gap: 15px; }
 
-/* Background biru dari logo icon dihapus */
+/* Background biru dari logo icon sudah dihapus total */
 .nav-logo-icon { display: flex; align-items: center; justify-content: center; margin-right: 5px; } 
 
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
@@ -96,13 +96,12 @@ footer { display: none !important; }
 
 
 # ==========================================
-# 4. HTML NAVBAR CUSTOM (Menggunakan F-String Variables)
+# 4. HTML NAVBAR CUSTOM (Fixed Sizing CSS)
 # ==========================================
-# Catatan: HTML sengaja dirapatkan agar Streamlit Markdown tidak error membaca indentasi
 st.markdown(f"""
 <div class="nav-container">
 <div class="nav-logo">
-<div class="nav-logo-icon"><img src="{ICON_LOGO_URL}" width="{ICON_LOGO_SIZE}" height="{ICON_LOGO_SIZE}"></div>
+<div class="nav-logo-icon"><img src="{ICON_LOGO_URL}" style="width: {ICON_LOGO_SIZE}px; height: {ICON_LOGO_SIZE}px; min-width: {ICON_LOGO_SIZE}px; flex-shrink: 0;"></div>
 <div><div class="nav-title">SUPERVISION DASHBOARD</div><div class="nav-subtitle">Bank Indonesia • DPPK / PUVA</div></div>
 </div>
 <div class="nav-menu">
@@ -111,9 +110,9 @@ st.markdown(f"""
 <div class="nav-item">OIS</div>
 </div>
 <div style="display: flex; align-items: center; gap: 20px;">
-<img src="{ICON_NOTIF_URL}" width="{ICON_NOTIF_SIZE}" height="{ICON_NOTIF_SIZE}" style="cursor: pointer;">
+<img src="{ICON_NOTIF_URL}" style="width: {ICON_NOTIF_SIZE}px; height: {ICON_NOTIF_SIZE}px; min-width: {ICON_NOTIF_SIZE}px; cursor: pointer; flex-shrink: 0;">
 <div style="display: flex; align-items: center; gap: 12px;">
-<div style="background: #e2e8f0; color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">👤</div>
+<div style="background: #e2e8f0; color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">👤</div>
 <div><div class="nav-profile-name">Admin BI</div><div class="nav-profile-role">Supervisor PUVA</div></div>
 </div>
 </div>
@@ -282,7 +281,7 @@ with col_chart1:
     with st.container(border=True):
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
-            <img src="{ICON_VOLUME_URL}" width="{ICON_VOLUME_SIZE}" height="{ICON_VOLUME_SIZE}">
+            <img src="{ICON_VOLUME_URL}" style="width: {ICON_VOLUME_SIZE}px; height: {ICON_VOLUME_SIZE}px; min-width: {ICON_VOLUME_SIZE}px; flex-shrink: 0;">
             Bank dengan Volume Transaksi Terbesar (Triliun Rp)
         </div>
         """, unsafe_allow_html=True)
@@ -305,7 +304,7 @@ with col_chart2:
     with st.container(border=True):
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
-            <img src="{ICON_INKLUSIF_URL}" width="{ICON_INKLUSIF_SIZE}" height="{ICON_INKLUSIF_SIZE}">
+            <img src="{ICON_INKLUSIF_URL}" style="width: {ICON_INKLUSIF_SIZE}px; height: {ICON_INKLUSIF_SIZE}px; min-width: {ICON_INKLUSIF_SIZE}px; flex-shrink: 0;">
             Apresiasi Inklusivitas Transaksi (Risk-Taking)
         </div>
         """, unsafe_allow_html=True)
@@ -329,7 +328,7 @@ with st.container(border=True):
     with col_title:
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
-            <img src="{ICON_NET_URL}" width="{ICON_NET_SIZE}" height="{ICON_NET_SIZE}">
+            <img src="{ICON_NET_URL}" style="width: {ICON_NET_SIZE}px; height: {ICON_NET_SIZE}px; min-width: {ICON_NET_SIZE}px; flex-shrink: 0;">
             Peta Jaringan Transaksi Ekosistem Repo
         </div>
         """, unsafe_allow_html=True)

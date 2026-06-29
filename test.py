@@ -23,23 +23,23 @@ st.set_page_config(
 
 # 1. Logo Navbar (Dice) - Dihilangkan background-nya di CSS
 ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
-ICON_LOGO_SIZE = 52
+ICON_LOGO_SIZE = 92
 
 # 2. Icon Notifikasi (Bell)
 ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"
-ICON_NOTIF_SIZE = 32
+ICON_NOTIF_SIZE = 38
 
 # 3. Icon Leaderboard Volume (Coin)
 ICON_VOLUME_URL = "https://api.iconify.design/fluent-emoji-high-contrast/coin.svg?color=%230f172a"
-ICON_VOLUME_SIZE = 32
+ICON_VOLUME_SIZE = 38
 
 # 4. Icon Inklusivitas (Help Desk)
 ICON_INKLUSIF_URL = "https://api.iconify.design/carbon/help-desk.svg?color=%230f172a"
-ICON_INKLUSIF_SIZE = 32
+ICON_INKLUSIF_SIZE = 38
 
 # 5. Icon Peta Jaringan (Spider Web)
 ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
-ICON_NET_SIZE = 32
+ICON_NET_SIZE = 38
 
 
 # ==========================================

@@ -16,7 +16,34 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS PALING AMAN (FOKUS PADA VISIBILITAS)
+# 2. KONFIGURASI ICON CUSTOM (Ubah Ukuran & Warna Di Sini)
+# ==========================================
+# Catatan: Untuk mengubah warna, ganti nilai kode HEX setelah tulisan "%23" 
+# (Misal: %231e3a5f artinya warna #1e3a5f)
+
+# 1. Logo Navbar (Dice) - Dihilangkan background-nya di CSS
+ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
+ICON_LOGO_SIZE = 32
+
+# 2. Icon Notifikasi (Bell)
+ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"
+ICON_NOTIF_SIZE = 28
+
+# 3. Icon Leaderboard Volume (Coin)
+ICON_VOLUME_URL = "https://api.iconify.design/fluent-emoji-high-contrast/coin.svg?color=%230f172a"
+ICON_VOLUME_SIZE = 22
+
+# 4. Icon Inklusivitas (Help Desk)
+ICON_INKLUSIF_URL = "https://api.iconify.design/carbon/help-desk.svg?color=%230f172a"
+ICON_INKLUSIF_SIZE = 22
+
+# 5. Icon Peta Jaringan (Spider Web)
+ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
+ICON_NET_SIZE = 24
+
+
+# ==========================================
+# 3. CSS PALING AMAN 
 # ==========================================
 st.markdown("""
 <style>
@@ -43,27 +70,8 @@ footer { display: none !important; }
     border-top: 4px solid #1e3a5f !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
 }
-
-[data-testid="metric-container"] {
-    padding: 15px 20px !important;
-}
-[data-testid="stVerticalBlockBorderWrapper"] {
-    padding: 15px !important;
-}
-
-/* Teks Label pada Metric */
-[data-testid="metric-container"] label {
-    color: #64748b !important;
-    font-weight: 700 !important;
-    font-size: 12px !important;
-    text-transform: uppercase !important;
-}
-/* Teks Angka pada Metric */
-[data-testid="stMetricValue"] {
-    color: #0f172a !important;
-    font-size: 26px !important;
-    font-weight: 800 !important;
-}
+[data-testid="metric-container"] { padding: 15px 20px !important; }
+[data-testid="stVerticalBlockBorderWrapper"] { padding: 15px !important; }
 
 /* 4. CUSTOM NAVBAR */
 .nav-container {
@@ -72,7 +80,10 @@ footer { display: none !important; }
     border-bottom: 1px solid #e2e8f0; margin-bottom: 25px;
 }
 .nav-logo { display: flex; align-items: center; gap: 15px; }
-.nav-logo-icon { background: #eff6ff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+
+/* Background biru dari logo icon dihapus */
+.nav-logo-icon { display: flex; align-items: center; justify-content: center; margin-right: 5px; } 
+
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
 .nav-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
 .nav-menu { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
@@ -85,41 +96,33 @@ footer { display: none !important; }
 
 
 # ==========================================
-# 3. HTML NAVBAR CUSTOM (Menggunakan Direct API Iconify)
+# 4. HTML NAVBAR CUSTOM (Menggunakan F-String Variables)
 # ==========================================
-st.markdown("""
+# Catatan: HTML sengaja dirapatkan agar Streamlit Markdown tidak error membaca indentasi
+st.markdown(f"""
 <div class="nav-container">
-    <div class="nav-logo">
-        <div class="nav-logo-icon">
-            <img src="https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f" width="22" height="22">
-        </div>
-        <div>
-            <div class="nav-title">SUPERVISION DASHBOARD</div>
-            <div class="nav-subtitle">Bank Indonesia • DPPK / PUVA</div>
-        </div>
-    </div>
-    <div class="nav-menu">
-        <div class="nav-item active">REPO</div>
-        <div class="nav-item">SRBI</div>
-        <div class="nav-item">OIS</div>
-    </div>
-    <div style="display: flex; align-items: center; gap: 20px;">
-        <img src="https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b" width="26" height="26" style="cursor: pointer;">
-        
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: #e2e8f0; color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">👤</div>
-            <div>
-                <div class="nav-profile-name">Admin BI</div>
-                <div class="nav-profile-role">Supervisor PUVA</div>
-            </div>
-        </div>
-    </div>
+<div class="nav-logo">
+<div class="nav-logo-icon"><img src="{ICON_LOGO_URL}" width="{ICON_LOGO_SIZE}" height="{ICON_LOGO_SIZE}"></div>
+<div><div class="nav-title">SUPERVISION DASHBOARD</div><div class="nav-subtitle">Bank Indonesia • DPPK / PUVA</div></div>
+</div>
+<div class="nav-menu">
+<div class="nav-item active">REPO</div>
+<div class="nav-item">SRBI</div>
+<div class="nav-item">OIS</div>
+</div>
+<div style="display: flex; align-items: center; gap: 20px;">
+<img src="{ICON_NOTIF_URL}" width="{ICON_NOTIF_SIZE}" height="{ICON_NOTIF_SIZE}" style="cursor: pointer;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<div style="background: #e2e8f0; color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">👤</div>
+<div><div class="nav-profile-name">Admin BI</div><div class="nav-profile-role">Supervisor PUVA</div></div>
+</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
 
 # ==========================================
-# 4. FUNGSI LOAD DATA EXCEL
+# 5. FUNGSI LOAD DATA EXCEL
 # ==========================================
 @st.cache_data
 def load_excel_data():
@@ -154,7 +157,7 @@ sheets_data = load_excel_data()
 
 
 # ==========================================
-# 5. HERO TEXT & DROPDOWN PERIODE
+# 6. HERO TEXT & DROPDOWN PERIODE
 # ==========================================
 col_hero, col_filter = st.columns([4, 1])
 
@@ -190,7 +193,7 @@ st.write("")
 
 
 # ==========================================
-# 6. PERHITUNGAN KPI UMUM
+# 7. PERHITUNGAN KPI UMUM
 # ==========================================
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
@@ -206,7 +209,7 @@ jumlah_bermasalah = total_lenders - lender_patuh_count
 
 
 # ==========================================
-# 7. KPI CARDS + HALF DOUGHNUT CHART (STATIS)
+# 8. KPI CARDS + HALF DOUGHNUT CHART (STATIS)
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
@@ -260,7 +263,7 @@ with c3:
     
 
 # ==========================================
-# 8. CHARTS
+# 9. CHARTS
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -277,10 +280,9 @@ df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
     with st.container(border=True):
-        # Icon 3: fluent-emoji-high-contrast:coin
-        st.markdown("""
+        st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
-            <img src="https://api.iconify.design/fluent-emoji-high-contrast/coin.svg?color=%230f172a" width="20" height="20">
+            <img src="{ICON_VOLUME_URL}" width="{ICON_VOLUME_SIZE}" height="{ICON_VOLUME_SIZE}">
             Bank dengan Volume Transaksi Terbesar (Triliun Rp)
         </div>
         """, unsafe_allow_html=True)
@@ -301,10 +303,9 @@ df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
     with st.container(border=True):
-        # Icon 4: carbon:help-desk
-        st.markdown("""
+        st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
-            <img src="https://api.iconify.design/carbon/help-desk.svg?color=%230f172a" width="20" height="20">
+            <img src="{ICON_INKLUSIF_URL}" width="{ICON_INKLUSIF_SIZE}" height="{ICON_INKLUSIF_SIZE}">
             Apresiasi Inklusivitas Transaksi (Risk-Taking)
         </div>
         """, unsafe_allow_html=True)
@@ -319,17 +320,16 @@ with col_chart2:
 
 
 # ==========================================
-# 9. NETWORK GRAPH
+# 10. NETWORK GRAPH
 # ==========================================
 st.write("")
 with st.container(border=True):
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
-        # Icon 5: lucide-lab:spider-web
-        st.markdown("""
+        st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
-            <img src="https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a" width="22" height="22">
+            <img src="{ICON_NET_URL}" width="{ICON_NET_SIZE}" height="{ICON_NET_SIZE}">
             Peta Jaringan Transaksi Ekosistem Repo
         </div>
         """, unsafe_allow_html=True)

@@ -193,20 +193,46 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM
+# 7. PERHITUNGAN KPI UMUM (LOGIKA DIPERBARUI)
 # ==========================================
+# A. Buat Master Map Status Bank
+lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'STATUS'})
+borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'STATUS'})
+status_map = pd.concat([lender_map, borrower_map]).drop_duplicates()
+status_map['STATUS'] = status_map['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
+status_dict = status_map.set_index('ID')['STATUS'].to_dict()
+
+# B. Gabungkan semua hubungan (Lender->Borrower dan Borrower->Lender)
+rels = pd.concat([
+    df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
+    df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
+]).drop_duplicates()
+
+# C. Tambahkan status pada relasi
+rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
+rels['Bank_Status'] = rels['Bank'].map(status_dict)
+
+# D. Filter hanya untuk Bank yang berstatus 'DU'
+du_rels = rels[rels['Bank_Status'] == 'DU']
+
+# E. Hitung jumlah unik counterparty per Bank DU
+compliance_check = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
+
+# F. Pastikan kolom DU dan NON DU ada
+if 'DU' not in compliance_check.columns: compliance_check['DU'] = 0
+if 'NON DU' not in compliance_check.columns: compliance_check['NON DU'] = 0
+
+# G. Definisi Patuh: Minimal 5 DU dan 5 Non DU
+compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
+
+# H. Update KPI
+total_du_banks = len(compliance_check)
+lender_patuh_count = compliance_check['Patuh'].sum()
+avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
+jumlah_bermasalah = total_du_banks - lender_patuh_count
+
+# Update Total Volume (Tetap sama)
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
-
-cp_stats = df.groupby(['SANDI CASH LENDER (Masked)', 'STATUS PD CASH BORROWER'])['SANDI CASH BORROWER (Masked)'].nunique().unstack(fill_value=0)
-if 'DU' not in cp_stats.columns: cp_stats['DU'] = 0
-if 'NON DU' not in cp_stats.columns: cp_stats['NON DU'] = 0
-
-cp_stats['Patuh'] = (cp_stats['DU'] >= 5) & (cp_stats['NON DU'] >= 5)
-total_lenders = len(cp_stats)
-lender_patuh_count = cp_stats['Patuh'].sum()
-avg_kepatuhan = (lender_patuh_count / total_lenders) * 100 if total_lenders > 0 else 0
-jumlah_bermasalah = total_lenders - lender_patuh_count
-
 
 # ==========================================
 # 8. KPI CARDS + HALF DOUGHNUT CHART (STATIS)

@@ -50,6 +50,7 @@ footer { display: none !important; }
 }
 [data-testid="stMetricValue"] {
     color: #0f172a !important;
+
     font-size: 26px !important;
     font-weight: 800 !important;
 }
@@ -63,7 +64,7 @@ footer { display: none !important; }
     padding: 15px !important;
 }
 
-/* 5. CUSTOM NAVBAR - WARNA TEKS DIBUAT GELAP AGAR TERBACA */
+/* 5. CUSTOM NAVBAR - WARNA TEKS DIBUAT GELAP UTAMA AGAR TERBACA */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
@@ -74,7 +75,7 @@ footer { display: none !important; }
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
 .nav-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
 .nav-menu { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
-.nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #64748b; border-radius: 6px; cursor: pointer; }
+.nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #64748b; font-weight: 500; }
@@ -260,7 +261,8 @@ with col_chart2:
 st.write("")
 with st.container(border=True):
     st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px;'>🕸️ Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #64748b; font-size: 12px; margin-bottom: 15px;'>● Biru tua = DU, ● Biru muda = Non DU</div>", unsafe_allow_html=True)
+    # Ganti warna teks legenda menjadi gelap utama (#0f172a) agar kontras dan terbaca.
+    st.markdown("<div style='color: #0f172a; font-size: 12px; margin-bottom: 15px;'>● Biru tua = DU, ● Biru muda = Non DU</div>", unsafe_allow_html=True)
     
     # 1. Buat pemetaan status bank (ID Bank -> Status)
     lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(

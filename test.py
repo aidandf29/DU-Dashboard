@@ -215,7 +215,7 @@ VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; mar
 
 # KARTU 1: KOMPOSISI EKOSISTEM (DONUT CHART)
 with col_donut:
-    with st.container(border=True):
+    with st.container():
         st.markdown(LABEL_HTML.format("Komposisi Ekosistem"), unsafe_allow_html=True)
         
         total_banks = 105
@@ -247,19 +247,19 @@ with col_donut:
 
 # KARTU 2: TOTAL VOLUME
 with c1:
-    with st.container(border=True):
+    with st.container():
         st.markdown(LABEL_HTML.format("Total Volume DU (Repo)"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"Rp {total_volume_t:.2f} T"), unsafe_allow_html=True)
 
 # KARTU 3: RATA-RATA KEPATUHAN
 with c2:
-    with st.container(border=True):
+    with st.container():
         st.markdown(LABEL_HTML.format("Rata-rata Kepatuhan"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{avg_kepatuhan:.1f}%"), unsafe_allow_html=True)
 
 # KARTU 4: BANK TIDAK PATUH
 with c3:
-    with st.container(border=True):
+    with st.container():
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
     

@@ -98,9 +98,8 @@ st.markdown("""
         </div>
     </div>
     <div class="nav-menu">
-        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item active">REPO</div>
         <div class="nav-item">SRBI</div>
-        <div class="nav-item">DNDF</div>
         <div class="nav-item">OIS</div>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
@@ -181,7 +180,7 @@ else:
 with col_hero:
     st.markdown(f"""
     <div style="font-family: 'Inter', sans-serif;">
-        <h1 style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pimpinan</h1>
+        <h1 style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pemantauan Dealer Utama</h1>
         <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">{periode_teks}</p>
     </div>
     """, unsafe_allow_html=True)
@@ -216,7 +215,7 @@ VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; mar
 # KARTU 1: KOMPOSISI EKOSISTEM (DONUT CHART)
 with col_donut:
     with st.container():
-        st.markdown(LABEL_HTML.format("Komposisi Ekosistem"), unsafe_allow_html=True)
+        st.markdown(LABEL_HTML.format("Komposisi Bank"), unsafe_allow_html=True)
         
         total_banks = 105
         du_count = 21

@@ -113,7 +113,7 @@ st.markdown(f"""
 
 
 # ==========================================
-# 5. FUNGSI LOAD DATA EXCEL (UPDATED UNTUK SECRETS)
+# 5. FUNGSI LOAD DATA EXCEL
 # ==========================================
 @st.cache_data
 def load_excel_data():
@@ -121,15 +121,16 @@ def load_excel_data():
         # Ambil link dari Streamlit Secrets
         raw_url = st.secrets["DATA_LINK"]
         
-        # Konversi Link GDrive biasa menjadi link Direct Download agar bisa dibaca Pandas
-        if "drive.google.com/file/d/" in raw_url:
+        # Ekstrak ID file dari link (berlaku untuk docs.google.com maupun drive.google.com)
+        if "/d/" in raw_url:
             file_id = raw_url.split("/d/")[1].split("/")[0]
-            download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+            # Paksa URL menjadi link "Direct Download" format xlsx
+            download_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
         else:
             download_url = raw_url
 
-        # Pandas membaca file excel langsung dari URL
-        xls = pd.ExcelFile(download_url)
+        # Tambahkan engine='openpyxl' agar Pandas tidak bingung dengan format dari URL
+        xls = pd.ExcelFile(download_url, engine='openpyxl')
         sheets_dict = {}
         
         for sheet_name in xls.sheet_names:

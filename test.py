@@ -253,23 +253,33 @@ with col_chart2:
         fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"))
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
+
+
+
 # ==========================================
 # 9. NETWORK GRAPH (LOGIKA PEWARNAAN BERDASARKAN KOLOM STATUS)
 # ==========================================
 st.write("")
 with st.container(border=True):
-    st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px;'>🕸️ Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
+    # Membagi area atas menjadi dua kolom: Kiri untuk Judul, Kanan untuk Filter
+    col_title, col_filter = st.columns([3, 1])
     
-    # Legenda 
-    st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
+    with col_title:
+        st.markdown("<div style='color: #0f172a; font-weight: 700; font-size: 16px; margin-bottom: 5px;'>🕸️ Peta Jaringan Transaksi Ekosistem Repo</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
-    # --- FITUR BARU: FILTER BANK ---
-    # 1. Ambil daftar semua bank unik di periode yang sedang aktif
-    all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
-    all_banks_sorted = sorted(list(all_banks))
-    
-    # 2. Buat dropdown untuk filter
-    selected_bank = st.selectbox("🔍 Sorot Jaringan Spesifik:", ["Semua Bank"] + all_banks_sorted)
+    with col_filter:
+        # 1. Ambil daftar semua bank unik
+        all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
+        all_banks_sorted = sorted(list(all_banks))
+        
+        # 2. Dropdown ditaruh di sini dengan label yang disembunyikan (collapsed)
+        st.write("") # Sedikit spasi agar sejajar dengan judul
+        selected_bank = st.selectbox(
+            "Filter Bank", 
+            ["Semua Bank"] + all_banks_sorted, 
+            label_visibility="collapsed"
+        )
     
     # 3. Buat pemetaan status bank (ID Bank -> Status)
     lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(
@@ -288,14 +298,12 @@ with st.container(border=True):
     df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
     
     # --- LOGIKA FILTERING ---
-    # Jika user memilih bank spesifik, potong data edge-nya
     if selected_bank != "Semua Bank":
         df_edges = df_edges[
             (df_edges['SANDI CASH LENDER (Masked)'] == selected_bank) | 
             (df_edges['SANDI CASH BORROWER (Masked)'] == selected_bank)
         ]
 
-    # Cek apakah setelah difilter masih ada datanya
     if df_edges.empty:
         st.info(f"Tidak ada transaksi untuk {selected_bank} pada periode ini.")
     else:
@@ -322,15 +330,12 @@ with st.container(border=True):
             status = bank_status_dict.get(str(node), 'NON DU')
             
             if status == 'DU':
-                node_color.append('#1e3a5f') # Biru Tua
-                # Besarkan node jika bank ini yang sedang difilter
+                node_color.append('#1e3a5f') 
                 node_size.append(26 if str(node) == selected_bank else 14)
             else:
-                node_color.append('#0ea5e9') # Biru Muda (NON DU)
-                # Besarkan node jika bank ini yang sedang difilter
+                node_color.append('#0ea5e9') 
                 node_size.append(26 if str(node) == selected_bank else 12) 
 
-        # Border outline khusus untuk node yang disorot (Opsional tapi mempercantik)
         line_colors = ['#f59e0b' if str(node) == selected_bank else 'white' for node in G.nodes()]
         line_widths = [3 if str(node) == selected_bank else 1 for node in G.nodes()]
 

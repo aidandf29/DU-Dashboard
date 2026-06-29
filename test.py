@@ -207,7 +207,6 @@ jumlah_bermasalah = total_lenders - lender_patuh_count
 # ==========================================
 # 7. KPI CARDS + HALF DOUGHNUT CHART (STATIS)
 # ==========================================
-# Kolom dibagi rata (4 kolom berukuran sama) agar proporsinya rapi
 col_donut, c1, c2, c3 = st.columns(4)
 
 with col_donut:
@@ -230,16 +229,25 @@ with col_donut:
 
     fig_donut.update_layout(
         showlegend=False,
-        margin=dict(t=5, b=0, l=0, r=0), height=115, # Disesuaikan agar tingginya pas dengan metrik
+        # Margin atas dikurangi agar chart lebih naik dan sejajar dengan angka metrik
+        margin=dict(t=0, b=0, l=0, r=0), height=125, 
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         annotations=[dict(text=f"<b>{total_banks}</b><br>Bank", x=0.5, y=0.15, font_size=16, showarrow=False, font=dict(color="#0f172a"))]
     )
     
-    # Dibungkus container agar punya class CSS stVerticalBlockBorderWrapper yang sama dengan metric
-    with st.container(border=True):
-        # Gaya teks disamakan persis dengan label metric Streamlit
-        st.markdown("<div style='color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: -5px;'>Komposisi Ekosistem</div>", unsafe_allow_html=True)
-        st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+    # Judul disamakan persis dengan label metric bawaan Streamlit (tanpa container kotak)
+    st.markdown("""
+        <div style="
+            color: rgba(49, 51, 63, 0.8); 
+            font-size: 14px; 
+            margin-bottom: -15px; 
+            margin-top: 5px;
+        ">
+            Komposisi Ekosistem
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
 # Metrik lainnya
 c1.metric("Total Volume DU (Repo)", f"Rp {total_volume_t:.2f} T")

@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import networkx as nx
+import streamlit.components.v1 as components # <-- IMPORT BARU UNTUK INJEKSI JS
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN (WIDE)
@@ -30,7 +31,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - GLASSMORPHISM PASTI BEDA
+# 3. CSS CUSTOM - BERSIH (TANPA CSS :has() YANG BIKIN ERROR)
 # ==========================================
 st.markdown("""
 <style>
@@ -48,12 +49,12 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* 1. BACKGROUND UTAMA APLIKASI ABU-ABU TERANG */
+/* BACKGROUND UTAMA APLIKASI ABU-ABU TERANG BERSIH */
 .stApp { 
     background-color: #f1f5f9 !important; 
 }
 
-/* 2. KARTU METRIC ATAS (SOLID PUTIH) */
+/* KARTU METRIC ATAS (SOLID PUTIH) */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -63,7 +64,7 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* 3. SEMUA KOTAK CONTAINER (Peta Jaringan, dll) JADI PUTIH SOLID */
+/* SEMUA KOTAK CONTAINER TERMASUK PETA JARINGAN DISET PUTIH SOLID DULU */
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -71,17 +72,7 @@ footer { display: none !important; }
     border-top: 4px solid #1e3a5f !important;
     box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05) !important;
     padding: 20px !important;
-}
-
-/* 4. EFEK KACA LIGHT BLUE KHUSUS LEADERBOARD SAJA */
-[data-testid="stVerticalBlockBorderWrapper"]:has(.glass-leaderboard) {
-    background: linear-gradient(135deg, rgba(219, 234, 254, 0.8) 0%, rgba(239, 246, 255, 0.5) 100%) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border-radius: 16px !important;
-    border: 1px solid #bfdbfe !important; 
-    border-top: 4px solid #0ea5e9 !important; /* Aksen Biru Cerah */
-    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.15) !important; 
+    transition: all 0.3s ease; /* Transisi agar pergantian warna oleh JS terlihat smooth */
 }
 
 /* CUSTOM NAVBAR */
@@ -286,6 +277,15 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
+# LOG TERMINAL
+bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
+print("\n" + "="*50)
+print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
+print(f"Total Universe DU: {total_universe_du} Bank")
+print(f"Jumlah DU Tidak Patuh: {jumlah_bermasalah} Bank")
+print(f"Daftar Nomor Bank DU Yang Tidak Patuh: {bank_tidak_patuh_list}")
+print("="*50 + "\n")
+
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
 # ==========================================
@@ -337,9 +337,8 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
-
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD EKSKLUSIF GLASS)
+# 9. PAPAN PERINGKAT (DENGAN PENANDA JS TARGET)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -358,8 +357,8 @@ df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
     with st.container(border=True): 
-        # ---> PENANDA KACA LEADERBOARD (Hanya kotak ini yang terdeteksi CSS) <---
-        st.markdown("<div class='glass-leaderboard'></div>", unsafe_allow_html=True)
+        # ---> PENANDA KACA LEADERBOARD UNTUK JAVASCRIPT <---
+        st.markdown("<div class='target-glass-leaderboard'></div>", unsafe_allow_html=True)
         
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
@@ -390,8 +389,8 @@ df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
     with st.container(border=True): 
-        # ---> PENANDA KACA LEADERBOARD <---
-        st.markdown("<div class='glass-leaderboard'></div>", unsafe_allow_html=True)
+        # ---> PENANDA KACA LEADERBOARD UNTUK JAVASCRIPT <---
+        st.markdown("<div class='target-glass-leaderboard'></div>", unsafe_allow_html=True)
         
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
@@ -414,10 +413,11 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (KOTAK PUTIH NORMAL)
+# 10. PETA JARINGAN EKOSISTEM (TETAP PUTIH NORMAL)
 # ==========================================
 st.write("")
 with st.container(border=True): 
+    # Karena tidak diberi marker khusus, JS tidak akan mewarnai kotak ini
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
@@ -436,7 +436,6 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
-            # === PERBAIKAN TYPO KURUNG SIKU PADA PENGGABUNGAN DATA ===
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             
@@ -533,3 +532,30 @@ with st.container(border=True):
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=500) 
             )
             st.plotly_chart(fig_net, use_container_width=True, config={'displayModeBar': False})
+
+
+# ==========================================
+# 11. INJEKSI JAVASCRIPT: TARGETING KACA MUTLAK ANTI GAGAL
+# ==========================================
+components.html("""
+<script>
+    // Script ini berjalan di latar belakang untuk meretas DOM Streamlit secara aman
+    setTimeout(function() {
+        const markers = window.parent.document.querySelectorAll('.target-glass-leaderboard');
+        markers.forEach(marker => {
+            // Naik ke atas (traverse up) mencari kotak container milik Streamlit
+            let wrapper = marker.closest('[data-testid="stVerticalBlockBorderWrapper"]');
+            if (wrapper) {
+                // Terapkan efek kaca Light Blue secara paksa
+                wrapper.style.background = 'linear-gradient(135deg, rgba(219, 234, 254, 0.75) 0%, rgba(239, 246, 255, 0.55) 100%)';
+                wrapper.style.backdropFilter = 'blur(12px)';
+                wrapper.style.webkitBackdropFilter = 'blur(12px)';
+                wrapper.style.border = '1px solid #bfdbfe';
+                wrapper.style.borderTop = '4px solid #0ea5e9';
+                wrapper.style.borderRadius = '16px';
+                wrapper.style.boxShadow = '0 10px 25px -5px rgba(37, 99, 235, 0.15)';
+            }
+        });
+    }, 150); // Delay sedikit untuk memastikan halaman Streamlit selesai dirender
+</script>
+""", height=0, width=0)

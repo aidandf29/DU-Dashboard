@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - GLASSMORPHISM EKSKLUSIF LEADERBOARD
+# 3. CSS CUSTOM - GLASSMORPHISM PASTI BEDA
 # ==========================================
 st.markdown("""
 <style>
@@ -39,7 +39,7 @@ st.markdown("""
 footer { display: none !important; }
 .header-anchor { display: none !important; }
 
-/* LEBARKAN KONTEN & HAPUS BACKGROUND */
+/* LEBARKAN KONTEN */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -48,9 +48,9 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* 1. BACKGROUND UTAMA APLIKASI KEMBALI ABU-ABU BERSIH (NORMAL) */
+/* 1. BACKGROUND UTAMA APLIKASI ABU-ABU TERANG */
 .stApp { 
-    background-color: #f8fafc !important; 
+    background-color: #f1f5f9 !important; 
 }
 
 /* 2. KARTU METRIC ATAS (SOLID PUTIH) */
@@ -59,33 +59,29 @@ footer { display: none !important; }
     border-radius: 12px !important;
     border: none !important; 
     border-top: 4px solid #1e3a5f !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+    box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05) !important;
     padding: 15px 20px !important;
 }
 
-/* 3. KARTU CONTAINER BIASA (SEPERTI PETA JARINGAN) TETAP PUTIH BERSIH */
-[data-testid="stVerticalBlockBorderWrapper"]:not(:has(.glass-leaderboard)) {
+/* 3. SEMUA KOTAK CONTAINER (Peta Jaringan, dll) JADI PUTIH SOLID */
+[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
     border: 1px solid #e2e8f0 !important; 
     border-top: 4px solid #1e3a5f !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+    box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05) !important;
     padding: 20px !important;
 }
 
-/* 4. EFEK KACA LIGHT BLUE KHUSUS KOTAK LEADERBOARD SAJA */
+/* 4. EFEK KACA LIGHT BLUE KHUSUS LEADERBOARD SAJA */
 [data-testid="stVerticalBlockBorderWrapper"]:has(.glass-leaderboard) {
-    /* Warna Light Blue Transparan dengan efek blur */
-    background: linear-gradient(135deg, rgba(219, 234, 254, 0.85) 0%, rgba(239, 246, 255, 0.6) 100%) !important;
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.8) 0%, rgba(239, 246, 255, 0.5) 100%) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border-radius: 16px !important;
-    
-    /* Garis tepi terang ala efek pantulan kaca acrylic */
-    border: 1px solid rgba(255, 255, 255, 1) !important; 
-    border-top: 4px solid #1e3a5f !important; 
-    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08), inset 0 2px 6px rgba(255, 255, 255, 0.6) !important; 
-    padding: 20px !important;
+    border: 1px solid #bfdbfe !important; 
+    border-top: 4px solid #0ea5e9 !important; /* Aksen Biru Cerah */
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.15) !important; 
 }
 
 /* CUSTOM NAVBAR */
@@ -290,15 +286,6 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# === LOG CONSOLE: Cetak Daftar DU Bermasalah ===
-bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
-print("\n" + "="*50)
-print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
-print(f"Total Universe DU: {total_universe_du} Bank")
-print(f"Jumlah DU Tidak Patuh: {jumlah_bermasalah} Bank")
-print(f"Daftar Nomor Bank DU Yang Tidak Patuh: {bank_tidak_patuh_list}")
-print("="*50 + "\n")
-
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
 # ==========================================
@@ -352,7 +339,7 @@ with c3:
 
 
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA YANG DIPERTAMJAM)
+# 9. PAPAN PERINGKAT (LEADERBOARD EKSKLUSIF GLASS)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -371,7 +358,7 @@ df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
     with st.container(border=True): 
-        # ---> PENANDA KHUSUS UNTUK CSS GLASSMORPHISM <---
+        # ---> PENANDA KACA LEADERBOARD (Hanya kotak ini yang terdeteksi CSS) <---
         st.markdown("<div class='glass-leaderboard'></div>", unsafe_allow_html=True)
         
         st.markdown(f"""
@@ -403,7 +390,7 @@ df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
     with st.container(border=True): 
-        # ---> PENANDA KHUSUS UNTUK CSS GLASSMORPHISM <---
+        # ---> PENANDA KACA LEADERBOARD <---
         st.markdown("<div class='glass-leaderboard'></div>", unsafe_allow_html=True)
         
         st.markdown(f"""
@@ -427,11 +414,10 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (KEMBALI NORMAL/PUTIH)
+# 10. PETA JARINGAN EKOSISTEM (KOTAK PUTIH NORMAL)
 # ==========================================
 st.write("")
 with st.container(border=True): 
-    # TIDAK ADA penanda class='glass-leaderboard', jadi kotak ini warnanya putih solid normal
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
@@ -450,7 +436,8 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
-            all_banks = pd.concat([df['SANDI CASH LENDER (Masked)', df['SANDI CASH BORROWER (Masked)']]]).dropna().unique()
+            # === PERBAIKAN TYPO KURUNG SIKU PADA PENGGABUNGAN DATA ===
+            all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             
             st.write("") 
@@ -487,7 +474,6 @@ with st.container(border=True):
 
             node_x, node_y, node_color, node_size, node_hover_text = [], [], [], [], []
             
-            # ---> MENYUSUN TEKS HOVER MENGGUNAKAN SIMBOL UNICODE <---
             for node in G.nodes():
                 x, y = pos[node]
                 node_x.append(x); node_y.append(y)

@@ -115,18 +115,14 @@ st.markdown(f"""
 @st.cache_data
 def load_excel_data_quarterly():
     try:
-        # Ambil link dari Streamlit Secrets
         raw_url = st.secrets["DATA_LINK"]
         
-        # Ekstrak ID file dari link (berlaku untuk docs.google.com maupun drive.google.com)
         if "/d/" in raw_url:
             file_id = raw_url.split("/d/")[1].split("/")[0]
-            # Paksa URL menjadi link "Direct Download" format xlsx
             download_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
         else:
             download_url = raw_url
 
-        # Tambahkan engine='openpyxl' agar Pandas tidak bingung
         xls = pd.ExcelFile(download_url, engine='openpyxl')
         quarter_dict = {}
         
@@ -135,13 +131,12 @@ def load_excel_data_quarterly():
             df.columns = df.columns.str.strip()
             
             if 'SANDI CASH LENDER (Masked)' in df.columns:
-                df['SANDI CASH LENDER (Masked)'] = df['SANDI CASH LENDER (Masked)'].astype(str)
+                df['SANDI CASH LENDER (Masked)'] = df['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
             if 'SANDI CASH BORROWER (Masked)' in df.columns:
-                df['SANDI CASH BORROWER (Masked)'] = df['SANDI CASH BORROWER (Masked)'].astype(str)
+                df['SANDI CASH BORROWER (Masked)'] = df['SANDI CASH BORROWER (Masked)'].astype(str).str.strip()
                 
             if 'STATUS PD CASH BORROWER' in df.columns:
-                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip()
-                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].replace('NON-DU', 'NON DU')
+                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
                 
             if 'TANGGAL TRANSAKSI' in df.columns:
                 df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'], errors='coerce')
@@ -158,23 +153,18 @@ def load_excel_data_quarterly():
                     else:
                         q_name = "Q4 (Okt-Des)"
                     
-                    # Ambil tahun unik dari data tersebut
                     tahun = int(sub_df['TAHUN TRANSAKSI'].iloc[0])
-                    
-                    # Bikin nama key baru
                     nama_key = f"{tahun} {q_name}"
                     if "Pra DU" in sheet_name:
                         nama_key += " (Pra DU)"
                     elif "Pasca DU" in sheet_name:
                         nama_key += " (Pasca DU)"
                     
-                    # Gabungkan jika kuncinya sudah ada
                     if nama_key in quarter_dict:
                         quarter_dict[nama_key] = pd.concat([quarter_dict[nama_key], sub_df]).drop_duplicates()
                     else:
                         quarter_dict[nama_key] = sub_df
                         
-        # Mengurutkan nama periode secara terbalik (Terbaru di atas)
         sorted_keys = sorted(quarter_dict.keys(), reverse=True)
         sorted_quarter_dict = {k: quarter_dict[k] for k in sorted_keys}
         
@@ -221,68 +211,66 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM (REVISED & CLEAN ALGORITHM)
+# 7. PERHITUNGAN KPI UMUM (HARDCODED OFFICIAL LIST)
 # ==========================================
 
-# A. Membuat Master Status yang 100% Bersih (Hanya Berpatokan pada Kolom Lender resmi)
-df_lender_status = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].dropna().drop_duplicates()
-df_lender_status['STATUS DU CASH LENDER'] = df_lender_status['STATUS DU CASH LENDER'].astype(str).str.upper().str.strip()
+# A. Kunci Daftar Nomor/Sandi Bank DU Resmi
+DAFTAR_DU_RESMI = ['3', '9', '10', '12', '14', '15', '17', '20', '23', '24', '29', '47', '51', '68', '70', '88', '111', '115', '201', '214', '427']
 
-# Ambil list Bank yang terverifikasi resmi sebagai DU di periode ini
-du_list = df_lender_status[df_lender_status['STATUS DU CASH LENDER'] == 'DU']['SANDI CASH LENDER (Masked)'].unique().tolist()
-du_list_str = [str(b) for b in du_list]
+# B. Identifikasi Bank Non-DU yang Aktif dari Data Periode Terpilih
+all_active_data_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
+active_non_du_banks = [str(bank) for bank in all_active_data_banks if str(bank) not in DAFTAR_DU_RESMI]
 
-# Buat kamus status untuk semua bank yang aktif bertransaksi
-all_active_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
-status_dict = {str(bank): ('DU' if str(bank) in du_list_str else 'NON DU') for bank in all_active_banks}
+# C. Hitung Populasi Total Secara Presisi
+total_du_banks = len(DAFTAR_DU_RESMI)
+non_du_count = len(active_non_du_banks)
+total_banks_in_period = total_du_banks + non_du_count
 
-# B. Hitung Populasi Bank Secara Dinamis Berdasarkan Data Real Periode Terpilih
-total_du_banks = len(du_list)
-total_banks_in_period = len(all_active_banks)
-non_du_count = total_banks_in_period - total_du_banks
+# D. Buat Kamus Status Mutlak (Source of Truth)
+status_dict = {}
+for bank in DAFTAR_DU_RESMI:
+    status_dict[bank] = 'DU'
+for bank in active_non_du_banks:
+    status_dict[bank] = 'NON DU'
 
-# C. Gabungkan Hubungan Dua Arah Tanpa Memandang Posisi Lender/Borrower
+# E. Penyatuan Hubungan Dua Arah (Lender <-> Borrower)
 rels = pd.concat([
     df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
     df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
 ]).dropna().drop_duplicates()
 
-# Pastikan tipe data string agar proses mapping akurat
 rels['Bank'] = rels['Bank'].astype(str)
 rels['Counterparty'] = rels['Counterparty'].astype(str)
 
-# Petakan status menggunakan kamus yang telah dibersihkan
 rels['Bank_Status'] = rels['Bank'].map(status_dict)
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
-# D. Filter Hubungan Transaksi Khusus untuk Aktor Utama yang Berstatus DU Resmi
-du_rels = rels[rels['Bank'].isin(du_list_str)]
+# F. Filter Hanya untuk Aktor Utama yang Masuk List DU Resmi
+du_rels = rels[rels['Bank'].isin(DAFTAR_DU_RESMI)]
 
-# E. Hitung Jumlah Unik Counterparty (Lawan Transaksi) Per Bank DU
+# G. Hitung Jumlah Unik Lawan Transaksi Berdasarkan Klasifikasi Status
 counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
-# Pastikan kolom DU dan NON DU tersedia di dataframe hasil pengelompokan
 if 'DU' not in counts.columns: counts['DU'] = 0
 if 'NON DU' not in counts.columns: counts['NON DU'] = 0
 
-# F. Masukkan Semua Daftar DU Resmi ke Tabel Evaluasi (Termasuk yang Pasif/0 Transaksi)
-compliance_check = pd.DataFrame(index=du_list_str)
+# H. Injeksi Seluruh Bank DU Resmi Ke Matrix Evaluasi (Termasuk yang Pasif)
+compliance_check = pd.DataFrame(index=DAFTAR_DU_RESMI)
 compliance_check = compliance_check.join(counts).fillna(0)
 
-# G. Tentukan Kepatuhan: Wajib memiliki minimal 5 lawan DU DAN 5 lawan Non-DU
+# I. Uji Parameter Kepatuhan: Wajib memiliki minimal 5 DU DAN 5 Non-DU
 compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
 
-# H. Rekapitulasi Akhir Nilai KPI Dashboard
+# J. Rekapitulasi Metrik Utama KPI Dashboard
 lender_patuh_count = compliance_check['Patuh'].sum()
 jumlah_bermasalah = total_du_banks - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
 
-# Hitung Total Volume Transaksi (Dalam Triliun Rp)
+# Hitung Total Volume Transaksi (Triliun Rp)
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-
 # ==========================================
-# 8. KPI CARDS + HALF DOUGHNUT CHART (DYNAMIC)
+# 8. KPI CARDS + DYNAMIC DONUT CHART
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
@@ -293,13 +281,8 @@ with col_donut:
     with st.container():
         st.markdown(LABEL_HTML.format("Komposisi Bank"), unsafe_allow_html=True)
         
-        # Menggunakan variabel dinamis hasil kalkulasi algoritma baru
-        total_banks = total_banks_in_period
-        du_cnt = total_du_banks
-        non_du_cnt = non_du_count
-        
         donut_labels = ['DU', 'Non-DU', '']
-        donut_values = [du_cnt, non_du_cnt, total_banks] 
+        donut_values = [total_du_banks, non_du_count, total_banks_in_period] 
         donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
         line_colors = ['#ffffff', '#ffffff', 'rgba(0,0,0,0)']
         line_widths = [2, 2, 0]
@@ -316,7 +299,7 @@ with col_donut:
             margin=dict(t=0, b=0, l=0, r=60), height=80, 
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             annotations=[dict(
-                text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks}</span><br><span style='font-size:11px; font-weight:600; color:#64748b;'>Bank</span>", 
+                text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks_in_period}</span><br><span style='font-size:11px; font-weight:600; color:#64748b;'>Bank</span>", 
                 x=0.5, y=0.15, showarrow=False
             )]
         )
@@ -365,10 +348,10 @@ with col_chart1:
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         fig1.update_layout(**CHART_BASE)
         
-        max_vol = df_vol['NOMINAL (TRILIUN)'].max()
+        max_vol = df_vol['NOMINAL (TRILIUN)'].max() if not df_vol.empty else 1
         fig1.update_xaxes(range=[0, max_vol * 1.25])
         
-        colors1 = ['#bfdbfe'] * 6 + ['#1e3a5f']
+        colors1 = ['#bfdbfe'] * min(6, len(df_vol)-1) + ['#1e3a5f'] if len(df_vol) > 0 else ['#1e3a5f']
         
         fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
@@ -376,7 +359,7 @@ with col_chart1:
 
 lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
 small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
-df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
+df_inklusif = df[df['SANDI CASH BORROWER (Maskedbrowser)' if False else 'SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
 df_inklusif.columns = ['LENDER', 'Score']
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
@@ -392,11 +375,11 @@ with col_chart2:
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         fig2.update_layout(**CHART_BASE)
         
-        max_score = df_inklusif['Score'].max()
+        max_score = df_inklusif['Score'].max() if not df_inklusif.empty else 1
         if pd.isna(max_score): max_score = 1
         fig2.update_xaxes(range=[0, max_score * 1.25])
         
-        colors2 = ['#bfdbfe'] * 6 + ['#1e3a5f']
+        colors2 = ['#bfdbfe'] * min(6, len(df_inklusif)-1) + ['#1e3a5f'] if len(df_inklusif) > 0 else ['#1e3a5f']
         
         fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
@@ -418,7 +401,7 @@ with st.container(border=True):
         """, unsafe_allow_html=True)
         st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
-    required_cols = ['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER', 'SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']
+    required_cols = ['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']
     missing_cols = [col for col in required_cols if col not in df.columns]
 
     if missing_cols:
@@ -426,7 +409,7 @@ with st.container(border=True):
     else:
         with col_filter_net:
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
-            all_banks_sorted = sorted(list(all_banks))
+            all_banks_sorted = sorted([str(b) for b in all_banks])
             
             st.write("") 
             selected_bank = st.selectbox(
@@ -434,14 +417,10 @@ with st.container(border=True):
                 ["Semua Bank"] + all_banks_sorted, 
                 label_visibility="collapsed"
             )
-        
-        lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'})
-        borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID_BANK', 'STATUS PD CASH BORROWER': 'STATUS'})
-        all_mapping_status = pd.concat([lender_map, borrower_map]).dropna()
-        all_mapping_status['STATUS'] = all_mapping_status['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
-        bank_status_dict = all_mapping_status.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
 
         df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
+        df_edges['SANDI CASH LENDER (Masked)'] = df_edges['SANDI CASH LENDER (Masked)'].astype(str)
+        df_edges['SANDI CASH BORROWER (Masked)'] = df_edges['SANDI CASH BORROWER (Masked)'].astype(str)
         
         if selected_bank != "Semua Bank":
             df_edges = df_edges[
@@ -469,7 +448,7 @@ with st.container(border=True):
                 x, y = pos[node]
                 node_x.append(x); node_y.append(y)
                 
-                status = bank_status_dict.get(str(node), 'NON DU')
+                status = status_dict.get(str(node), 'NON DU')
                 
                 if status == 'DU':
                     node_color.append('#1e3a5f') 

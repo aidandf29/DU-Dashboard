@@ -33,7 +33,6 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
 ICON_NET_SIZE = 24
 
-
 # ==========================================
 # 3. CSS PALING AMAN 
 # ==========================================
@@ -86,7 +85,6 @@ footer { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-
 # ==========================================
 # 4. HTML NAVBAR CUSTOM
 # ==========================================
@@ -111,12 +109,11 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-
 # ==========================================
-# 5. FUNGSI LOAD DATA EXCEL
+# 5. FUNGSI LOAD DATA EXCEL & GENERATE KUARTAL
 # ==========================================
 @st.cache_data
-def load_excel_data():
+def load_excel_data_quarterly():
     try:
         # Ambil link dari Streamlit Secrets
         raw_url = st.secrets["DATA_LINK"]
@@ -129,9 +126,9 @@ def load_excel_data():
         else:
             download_url = raw_url
 
-        # Tambahkan engine='openpyxl' agar Pandas tidak bingung dengan format dari URL
+        # Tambahkan engine='openpyxl' agar Pandas tidak bingung
         xls = pd.ExcelFile(download_url, engine='openpyxl')
-        sheets_dict = {}
+        quarter_dict = {}
         
         for sheet_name in xls.sheet_names:
             df = pd.read_excel(xls, sheet_name=sheet_name)
@@ -149,27 +146,58 @@ def load_excel_data():
             if 'TANGGAL TRANSAKSI' in df.columns:
                 df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'], errors='coerce')
                 
-            sheets_dict[sheet_name] = df
-        return sheets_dict
+            # --- LOGIKA MEMECAH JADI 3 BULAN (KUARTAL) ---
+            if 'BULAN TRANSAKSI' in df.columns and 'TAHUN TRANSAKSI' in df.columns:
+                for label_bulan, sub_df in df.groupby('BULAN TRANSAKSI'):
+                    if label_bulan in [1, 2, 3]:
+                        q_name = "Q1 (Jan-Mar)"
+                    elif label_bulan in [4, 5, 6]:
+                        q_name = "Q2 (Apr-Jun)"
+                    elif label_bulan in [7, 8, 9]:
+                        q_name = "Q3 (Jul-Sep)"
+                    else:
+                        q_name = "Q4 (Okt-Des)"
+                    
+                    # Ambil tahun unik dari data tersebut
+                    tahun = int(sub_df['TAHUN TRANSAKSI'].iloc[0])
+                    
+                    # Bikin nama key baru
+                    nama_key = f"{tahun} {q_name}"
+                    if "Pra DU" in sheet_name:
+                        nama_key += " (Pra DU)"
+                    elif "Pasca DU" in sheet_name:
+                        nama_key += " (Pasca DU)"
+                    
+                    # Gabungkan jika kuncinya sudah ada
+                    if nama_key in quarter_dict:
+                        quarter_dict[nama_key] = pd.concat([quarter_dict[nama_key], sub_df]).drop_duplicates()
+                    else:
+                        quarter_dict[nama_key] = sub_df
+                        
+        # Mengurutkan nama periode secara terbalik (Terbaru di atas)
+        sorted_keys = sorted(quarter_dict.keys(), reverse=True)
+        sorted_quarter_dict = {k: quarter_dict[k] for k in sorted_keys}
+        
+        return sorted_quarter_dict
     except Exception as e:
         st.error(f"Gagal memuat Excel: {e}")
         return None
 
-sheets_data = load_excel_data()
+sheets_data = load_excel_data_quarterly()
 
 # ==========================================
 # 6. HERO TEXT & DROPDOWN PERIODE
 # ==========================================
-col_hero, col_filter = st.columns([4, 1])
+col_hero, col_filter = st.columns([3.5, 1.5])
 
 if sheets_data is not None:
     daftar_periode = list(sheets_data.keys())
 else:
-    daftar_periode = ["2026 H1", "2025 H2", "2025 H1"] 
+    daftar_periode = ["2026 Q1 (Jan-Mar)", "2025 Q4 (Okt-Des)", "2025 Q3 (Jul-Sep)"] 
 
 with col_filter:
     st.write("") 
-    selected_period = st.selectbox("Periode", daftar_periode, label_visibility="collapsed")
+    selected_period = st.selectbox("Periode Evaluasi", daftar_periode, label_visibility="collapsed")
 
 if sheets_data is None: 
     st.stop()
@@ -179,7 +207,7 @@ df = sheets_data[selected_period]
 if 'TANGGAL TRANSAKSI' in df.columns and not df['TANGGAL TRANSAKSI'].isnull().all():
     min_date = df['TANGGAL TRANSAKSI'].min().strftime('%d %b %Y')
     max_date = df['TANGGAL TRANSAKSI'].max().strftime('%d %b %Y')
-    periode_teks = f"Periode Transaksi: {min_date} - {max_date}"
+    periode_teks = f"Periode Evaluasi 3 Bulanan: {min_date} - {max_date}"
 else:
     periode_teks = "Periode Transaksi: Data tanggal tidak tersedia"
 
@@ -193,7 +221,7 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM (DEBUG VERSION)
+# 7. PERHITUNGAN KPI UMUM
 # ==========================================
 
 # A. Buat Master Map Status Bank
@@ -232,7 +260,7 @@ lender_patuh_count = compliance_check['Patuh'].sum()
 avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
 jumlah_bermasalah = total_du_banks - lender_patuh_count
 
-# Update Total Volume (Tetap sama)
+# Update Total Volume
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
 # ==========================================
@@ -289,7 +317,6 @@ with c3:
     with st.container():
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
-    
 
 # ==========================================
 # 9. CHARTS
@@ -347,6 +374,7 @@ with col_chart2:
         fig2.update_layout(**CHART_BASE)
         
         max_score = df_inklusif['Score'].max()
+        if pd.isna(max_score): max_score = 1
         fig2.update_xaxes(range=[0, max_score * 1.25])
         
         colors2 = ['#bfdbfe'] * 6 + ['#1e3a5f']
@@ -356,7 +384,7 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. NETWORK GRAPH (UPDATED - SAFETY CHECK)
+# 10. NETWORK GRAPH
 # ==========================================
 st.write("")
 with st.container(border=True):
@@ -371,14 +399,12 @@ with st.container(border=True):
         """, unsafe_allow_html=True)
         st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
 
-    # CEK APAKAH KOLOM YANG DIBUTUHKAN ADA
     required_cols = ['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER', 'SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']
     missing_cols = [col for col in required_cols if col not in df.columns]
 
     if missing_cols:
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
-        # KODE ASLI JIKA KOLOM LENGKAP
         with col_filter_net:
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted(list(all_banks))

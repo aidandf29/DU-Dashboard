@@ -424,7 +424,7 @@ with st.container(border=True):
             Peta Jaringan Transaksi Ekosistem Repo
         </div>
         """, unsafe_allow_html=True)
-        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Bank Non DU &nbsp;&nbsp;</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Bank Non DU &nbsp;&nbsp;|&nbsp;&nbsp; Jingga = Non Bank &nbsp;&nbsp;</div>", unsafe_allow_html=True)
 
     required_cols = ['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']
     missing_cols = [col for col in required_cols if col not in df.columns]

@@ -30,18 +30,16 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - SUPER GLASSMORPHISM LIGHT BLUE TINT
+# 3. CSS CUSTOM - PREMIUM GLASSMORPHISM
 # ==========================================
 st.markdown("""
 <style>
 /* HAPUS HEADER BAWAAN STREAMLIT */
 [data-testid="stHeader"] { display: none !important; }
 footer { display: none !important; }
-
-/* HAPUS ICON LINK (RANTAI) PADA JUDUL */
 .header-anchor { display: none !important; }
 
-/* LEBARKAN KONTEN & HAPUS BACKGROUND */
+/* LEBARKAN KONTEN */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -50,14 +48,16 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* GRADIENT BACKGROUND UNTUK MELIHAT EFEK TEMBUS PANDANG */
+/* 1. BACKGROUND APLIKASI NETRAL BERPOLA (Rahasia agar efek blur kaca terlihat nyata) */
 .stApp { 
-    background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important; 
+    background-color: #f8fafc !important;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px) !important;
+    background-size: 24px 24px !important;
 }
 
-/* DESAIN KARTU METRIC ATAS (SOLID & CLEAN) */
+/* 2. KARTU METRIC ATAS (SOLID PUTIH AGAR KONTRAST DENGAN KACA) */
 [data-testid="metric-container"] {
-    background-color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
     border-radius: 12px !important;
     border: none !important; 
     border-top: 4px solid #1e3a5f !important;
@@ -65,15 +65,23 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* EFEK GLASSMORPHISM DENGAN TINT LIGHT BLUE TRANSPARAN & FROSTED TEGAS */
+/* 3. KOTAK LEADERBOARD & GRAPH (PREMIUM LIGHT BLUE GLASS) */
 [data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(219, 234, 254, 0.55) !important; /* Campuran warna light blue transparan */
-    backdrop-filter: blur(20px) !important; /* Efek buram pekat */
-    -webkit-backdrop-filter: blur(20px) !important;
+    /* Gradien kaca dari light blue ke transparan */
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.45) 0%, rgba(239, 246, 255, 0.15) 100%) !important;
+    
+    /* Efek buram pekat dan saturasi warna di belakangnya ditarik */
+    backdrop-filter: blur(16px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
+    
     border-radius: 16px !important;
-    border: 1px solid rgba(147, 197, 253, 0.5) !important; /* Garis tepi light blue tipis */
-    border-top: 4px solid #1e3a5f !important; /* Garis tegas bagian atas kartu */
-    box-shadow: 0 12px 36px 0 rgba(15, 23, 42, 0.12) !important; /* Bayangan pop-out mendalam */
+    
+    /* Pantulan cahaya kaca di pinggiran (Rim Light Putih) */
+    border: 1px solid rgba(255, 255, 255, 0.7) !important; 
+    border-top: 4px solid #1e3a5f !important; 
+    
+    /* Bayangan elegan agar melayang */
+    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08) !important; 
     padding: 20px !important;
 }
 
@@ -81,12 +89,12 @@ footer { display: none !important; }
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
-    border-bottom: 1px solid #94a3b8; margin-bottom: 25px;
+    border-bottom: 1px solid #cbd5e1; margin-bottom: 25px;
 }
 .nav-logo { display: flex; align-items: center; gap: 12px; }
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
 .nav-subtitle { font-size: 12px; color: #475569; font-weight: 500; }
-.nav-menu { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.08); padding: 6px; border-radius: 10px; }
+.nav-menu { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.05); padding: 6px; border-radius: 10px; }
 .nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .nav-item.disabled { color: #64748b; cursor: not-allowed; } 
@@ -279,9 +287,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# ==========================================
-# ⚡ DEBUGGING / LOG CONSOLE TERMINAL OTOMATIS
-# ==========================================
+# Cari daftar bank DU yang tidak patuh (Terminal Log)
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
 print("\n" + "="*50)
 print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
@@ -342,7 +348,7 @@ with c3:
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA YANG DIPERTAMJAM)
+# 9. PAPAN PERINGKAT (LEADERBOARD PREMIUM GLASS)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -411,7 +417,7 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (EFEK KACA + HOVER INFO DU)
+# 10. PETA JARINGAN EKOSISTEM (PREMIUM GLASS)
 # ==========================================
 st.write("")
 with st.container(border=True): 
@@ -424,7 +430,7 @@ with st.container(border=True):
             Peta Jaringan Transaksi Ekosistem Repo
         </div>
         """, unsafe_allow_html=True)
-        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Bank Non DU &nbsp;&nbsp;|&nbsp;&nbsp; Jingga = Non Bank &nbsp;&nbsp;</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Bank Non DU &nbsp;&nbsp;|&nbsp;&nbsp; Jingga = Lembaga Non-Bank</div>", unsafe_allow_html=True)
 
     required_cols = ['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']
     missing_cols = [col for col in required_cols if col not in df.columns]
@@ -485,7 +491,6 @@ with st.container(border=True):
                     du_trans = int(compliance_check.loc[node_str, 'DU']) if node_str in compliance_check.index else 0
                     non_du_trans = int(compliance_check.loc[node_str, 'NON DU']) if node_str in compliance_check.index else 0
                     
-                    # Menggunakan Simbol Unicode Emojis OS agar ter-render sempurna di Plotly
                     if (node_str in compliance_check.index and compliance_check.loc[node_str, 'Patuh']):
                         is_patuh = "✅ PATUH"
                     else:
@@ -494,8 +499,8 @@ with st.container(border=True):
                     node_hover_text.append(
                         f"<b>Bank DU: {node_str}</b><br>"
                         f"Status: {is_patuh}<br>"
-                        f"Transaksi DU: {du_trans}<br>"
-                        f"Transaksi Non-DU: {non_du_trans}"
+                        f"Transaksi DU: {du_trans} (Min. 5)<br>"
+                        f"Transaksi Non-DU: {non_du_trans} (Min. 5)"
                     )
                     
                 elif status == 'NON BANK':

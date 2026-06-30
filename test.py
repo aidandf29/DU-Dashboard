@@ -34,7 +34,7 @@ ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS PALING AMAN 
+# 3. CSS CUSTOM DENGAN EFEK GLASSMORPHISM 
 # ==========================================
 st.markdown("""
 <style>
@@ -53,30 +53,44 @@ footer { display: none !important; }
     padding-left: 3rem !important; 
     padding-right: 3rem !important; 
 }
-.stApp { background-color: #f8fafc !important; }
 
-/* DESAIN KARTU UNIFIED */
-[data-testid="metric-container"],
-[data-testid="stVerticalBlockBorderWrapper"] {
+/* GRADIENT BACKGROUND SUPAYA EFEK KACA MAKIN TERLIHAT NYATA */
+.stApp { 
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important; 
+}
+
+/* DESAIN KARTU METRIC ATAS (TETAP SOLID AGAR JELAS) */
+[data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
     border: none !important; 
     border-top: 4px solid #1e3a5f !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+    padding: 15px 20px !important;
 }
-[data-testid="metric-container"] { padding: 15px 20px !important; }
-[data-testid="stVerticalBlockBorderWrapper"] { padding: 15px !important; }
+
+/* DESAIN EFEK GLASSMORPHISM KHUSUS UNTUK KONTAINER CHART & GRAPH */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important; 
+    border-top: 4px solid #1e3a5f !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06) !important;
+    padding: 20px !important;
+}
 
 /* CUSTOM NAVBAR */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
-    border-bottom: 1px solid #e2e8f0; margin-bottom: 25px;
+    border-bottom: 1px solid #cbd5e1; margin-bottom: 25px;
 }
 .nav-logo { display: flex; align-items: center; gap: 12px; }
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
 .nav-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
-.nav-menu { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 10px; }
+.nav-menu { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.05); padding: 6px; border-radius: 10px; }
 .nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .nav-item.disabled { color: #94a3b8; cursor: not-allowed; } 
@@ -102,7 +116,7 @@ st.markdown(f"""
 <div style="display: flex; align-items: center; gap: 20px;">
 <img src="{ICON_NOTIF_URL}&width={ICON_NOTIF_SIZE}&height={ICON_NOTIF_SIZE}" style="cursor: pointer; flex-shrink: 0;">
 <div style="display: flex; align-items: center; gap: 12px;">
-<div style="background: #e2e8f0; color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">👤</div>
+<div style="background: rgba(30, 58, 95, 0.1); color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">👤</div>
 <div><div class="nav-profile-name">Admin BI</div><div class="nav-profile-role">Supervisor PUVA</div></div>
 </div>
 </div>
@@ -215,18 +229,14 @@ st.write("")
 # ==========================================
 # 7. PERHITUNGAN KPI UMUM & KLASIFIKASI ENTITAS
 # ==========================================
-
-# Master List DU Resmi Pembanding
 DAFTAR_DU_RESMI = ['3', '9', '10', '12', '14', '15', '17', '20', '23', '24', '29', '47', '51', '68', '70', '88', '111', '115', '201', '214', '427']
 
-# Ekstrak preferensi label klasifikasi teks dari Excel asal
 l_status = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'RAW_STATUS'})
 b_status = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'RAW_STATUS'})
 raw_status_map = pd.concat([l_status, b_status]).dropna().drop_duplicates()
 raw_status_map['RAW_STATUS'] = raw_status_map['RAW_STATUS'].astype(str).str.upper().str.strip()
 base_status_dict = raw_status_map.set_index('ID')['RAW_STATUS'].to_dict()
 
-# Mendaftar seluruh entitas aktif khusus di kuartal terpilih
 all_active_data_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
 all_active_data_banks = [str(bank).strip() for bank in all_active_data_banks]
 
@@ -241,13 +251,11 @@ for bank in all_active_data_banks:
         else:
             status_dict[bank] = 'NON DU'
 
-# Hitung komposisi riil komponen donut chart kuartalan
 active_du_count = sum(1 for b in all_active_data_banks if status_dict[b] == 'DU')
 active_non_du_count = sum(1 for b in all_active_data_banks if status_dict[b] == 'NON DU')
 active_non_bank_count = sum(1 for b in all_active_data_banks if status_dict[b] == 'NON BANK')
 total_active_banks = len(all_active_data_banks)
 
-# Konsolidasi Hubungan Dua Arah Jaringan Jual-Beli
 rels = pd.concat([
     df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
     df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
@@ -259,7 +267,6 @@ rels['Counterparty'] = rels['Counterparty'].astype(str)
 rels['Bank_Status'] = rels['Bank'].map(status_dict)
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
-# Uji Kepatuhan Evaluasi bagi Seluruh Universe Master DU
 du_rels = rels[rels['Bank'].isin(DAFTAR_DU_RESMI)]
 counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
@@ -270,7 +277,6 @@ compliance_check = pd.DataFrame(index=DAFTAR_DU_RESMI)
 compliance_check = compliance_check.join(counts).fillna(0)
 compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
 
-# Metrik Atas Ringkasan Eksekutif
 lender_patuh_count = compliance_check['Patuh'].sum()
 total_universe_du = len(DAFTAR_DU_RESMI)
 jumlah_bermasalah = total_universe_du - lender_patuh_count
@@ -278,7 +284,7 @@ avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
 # ==========================================
-# 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS (3 ENTITAS)
+# 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
@@ -329,7 +335,7 @@ with c3:
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD FILTERED FOR DU ONLY)
+# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -343,12 +349,12 @@ CHART_BASE = dict(
 # Leaderboard 1: Volume Terbesar (Khusus DU)
 df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
 df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
-df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)] # Filter khusus DU
+df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
 df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
 df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
-    with st.container(border=True):
+    with st.container(border=True):  # Otomatis bermutasi jadi kartu Glassmorphism via CSS
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
@@ -374,11 +380,11 @@ small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
 df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
 df_inklusif.columns = ['LENDER', 'Score']
 df_inklusif['LENDER'] = df_inklusif['LENDER'].astype(str).str.strip()
-df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)] # Filter khusus DU
+df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
-    with st.container(border=True):
+    with st.container(border=True):  # Otomatis bermutasi jadi kartu Glassmorphism via CSS
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
@@ -400,10 +406,10 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (3 TIPE WARNA NODES)
+# 10. PETA JARINGAN EKOSISTEM (EFEK KACA)
 # ==========================================
 st.write("")
-with st.container(border=True):
+with st.container(border=True):  # Otomatis bermutasi jadi kartu Glassmorphism via CSS
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:

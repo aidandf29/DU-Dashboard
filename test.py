@@ -34,7 +34,7 @@ ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM DENGAN EFEK GLASSMORPHISM 
+# 3. CSS CUSTOM - EFEK GLASSMORPHISM YANG DIPERTAMJAM
 # ==========================================
 st.markdown("""
 <style>
@@ -54,30 +54,30 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* GRADIENT BACKGROUND SUPAYA EFEK KACA MAKIN TERLIHAT NYATA */
+/* GRADIENT BACKGROUND KONTRAST */
 .stApp { 
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important; 
+    background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important; 
 }
 
-/* DESAIN KARTU METRIC ATAS (TETAP SOLID AGAR JELAS) */
+/* DESAIN KARTU METRIC ATAS (SOLID & CLEAN) */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
     border: none !important; 
     border-top: 4px solid #1e3a5f !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
     padding: 15px 20px !important;
 }
 
-/* DESAIN EFEK GLASSMORPHISM KHUSUS UNTUK KONTAINER CHART & GRAPH */
+/* DESAIN EFEK GLASSMORPHISM BARU (AGAK DIABUIN & LEBIH FROSTED) */
 [data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.45) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    background: rgba(241, 245, 249, 0.65) !important; /* Menggunakan tint warna abu-abu slate transparan */
+    backdrop-filter: blur(20px) !important; /* Efek blur frosted diperkuat */
+    -webkit-backdrop-filter: blur(20px) !important;
     border-radius: 16px !important;
-    border: 1px solid rgba(255, 255, 255, 0.35) !important; 
-    border-top: 4px solid #1e3a5f !important;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06) !important;
+    border: 1px solid rgba(148, 163, 184, 0.5) !important; /* Garis tepi abu-abu dipertegas */
+    border-top: 4px solid #1e3a5f !important; /* Aksen garis atas tetap tegas */
+    box-shadow: 0 12px 36px 0 rgba(15, 23, 42, 0.1) !important; /* Bayangan diperdalam */
     padding: 20px !important;
 }
 
@@ -85,17 +85,17 @@ footer { display: none !important; }
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
-    border-bottom: 1px solid #cbd5e1; margin-bottom: 25px;
+    border-bottom: 1px solid #94a3b8; margin-bottom: 25px;
 }
 .nav-logo { display: flex; align-items: center; gap: 12px; }
 .nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
-.nav-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
-.nav-menu { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.05); padding: 6px; border-radius: 10px; }
+.nav-subtitle { font-size: 12px; color: #475569; font-weight: 500; }
+.nav-menu { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.08); padding: 6px; border-radius: 10px; }
 .nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }
 .nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.nav-item.disabled { color: #94a3b8; cursor: not-allowed; } 
+.nav-item.disabled { color: #64748b; cursor: not-allowed; } 
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
-.nav-profile-role { font-size: 11px; color: #64748b; font-weight: 500; }
+.nav-profile-role { font-size: 11px; color: #475569; font-weight: 500; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -116,7 +116,7 @@ st.markdown(f"""
 <div style="display: flex; align-items: center; gap: 20px;">
 <img src="{ICON_NOTIF_URL}&width={ICON_NOTIF_SIZE}&height={ICON_NOTIF_SIZE}" style="cursor: pointer; flex-shrink: 0;">
 <div style="display: flex; align-items: center; gap: 12px;">
-<div style="background: rgba(30, 58, 95, 0.1); color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">👤</div>
+<div style="background: rgba(30, 58, 95, 0.12); color: #1e3a5f; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">👤</div>
 <div><div class="nav-profile-name">Admin BI</div><div class="nav-profile-role">Supervisor PUVA</div></div>
 </div>
 </div>
@@ -221,7 +221,7 @@ with col_hero:
     st.markdown(f"""
     <div style="font-family: 'Inter', sans-serif;">
         <div style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pemantauan Dealer Utama</div>
-        <p style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 0;">{periode_teks}</p>
+        <p style="font-size: 13px; color: #475569; font-weight: 500; margin-top: 0;">{periode_teks}</p>
     </div>
     """, unsafe_allow_html=True)
 st.write("")
@@ -288,7 +288,7 @@ total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
-LABEL_HTML = '<div style="color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">{}</div>'
+LABEL_HTML = '<div style="color: #475569; font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">{}</div>'
 VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; margin-bottom: 15px;">{}</div>'
 
 with col_donut:
@@ -335,7 +335,7 @@ with c3:
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA)
+# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA YANG DIPERTAMJAM)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -354,7 +354,7 @@ df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
 df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
-    with st.container(border=True):  # Otomatis bermutasi jadi kartu Glassmorphism via CSS
+    with st.container(border=True): 
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
@@ -384,7 +384,7 @@ df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
-    with st.container(border=True):  # Otomatis bermutasi jadi kartu Glassmorphism via CSS
+    with st.container(border=True): 
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
@@ -409,7 +409,7 @@ with col_chart2:
 # 10. PETA JARINGAN EKOSISTEM (EFEK KACA)
 # ==========================================
 st.write("")
-with st.container(border=True):  # Otomatis bermutasi jadi kartu Glassmorphism via CSS
+with st.container(border=True): 
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:

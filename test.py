@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - STRUKTURAL KACA LEADERBOARD (ANTI-GAGAL)
+# 3. CSS CUSTOM - GAMBAR BACKGROUND DENGAN OPACITY
 # ==========================================
 st.markdown("""
 <style>
@@ -39,7 +39,7 @@ st.markdown("""
 footer { display: none !important; }
 .header-anchor { display: none !important; }
 
-/* LEBARKAN KONTEN INTERFASIAL */
+/* LEBARKAN KONTEN APLIKASI */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -48,12 +48,12 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* 1. BACKGROUND UTAMA DASHBOARD */
+/* 1. BACKGROUND UTAMA DASHBOARD (ABU-ABU NETRAL BERSIH) */
 .stApp { 
     background-color: #f1f5f9 !important; 
 }
 
-/* 2. KARTU METRIC RINGKASAN EKSEKUTIF */
+/* 2. KARTU METRIC RINGKASAN ATAS (SOLID PUTIH) */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -63,7 +63,7 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* 3. SETTINGAN DASAR SEMUA KOTAK (Default: Peta Jaringan Menjadi Putih Bersih) */
+/* 3. SETTINGAN DASAR KOTAK CONTAINER (Peta Jaringan Tetap Putih Solid) */
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -73,16 +73,20 @@ footer { display: none !important; }
     padding: 20px !important;
 }
 
-/* 4. OVERRIDE STRUKTURAL: KHUSUS KOTAK LEADERBOARD (Karena Berada di Dalam Komponen Kolom) */
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
-    /* Campuran warna kaca light blue dengan opacity presisi */
-    background: linear-gradient(135deg, rgba(219, 234, 254, 0.85) 0%, rgba(239, 246, 255, 0.55) 100%) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
+/* 4. TARGET MUTLAK: KHUSUS KOTAK DI DALAM KOLOM (LEADERBOARD) */
+div[data-testid="column"] div[data-testid="stVerticalBlockBorderWrapper"] {
+    /* Menggunakan Gambar Asli dari URL dicampur Overlay Transparan (Opacity) */
+    background: linear-gradient(rgba(253, 242, 244, 0.85), rgba(253, 242, 244, 0.90)), 
+                url("https://images.unsplash.com/photo-1557672172-298e090bd0f1?auto=format&fit=crop&w=1600&q=80") center/cover !important;
+    
     border-radius: 16px !important;
-    border: 1px solid #bfdbfe !important; 
-    border-top: 4px solid #0ea5e9 !important; /* Aksen garis atas biru cerah khas Leaderboard */
-    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.12) !important; 
+    
+    /* Garis Tepi Maroon Tebal */
+    border: 2px solid #9f1239 !important; 
+    border-top: 5px solid #881337 !important; 
+    
+    /* Efek Shadow agar terangkat */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* NAVBAR BRANDING STYLE */
@@ -287,7 +291,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# LOG CONSOLE TERMINAL TERMINAL BACKGROUND
+# Cetak log bank bermasalah ke terminal background
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
 print("\n" + "="*50)
 print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
@@ -347,10 +351,13 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
+
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA STRUKTURAL)
+# 9. PAPAN PERINGKAT (BACKGROUND GAMBAR BER-OPACITY)
 # ==========================================
 st.write("")
+
+# Ini adalah `st.columns`, kotak di dalamnya akan ditarget oleh CSS baru kita!
 col_chart1, col_chart2 = st.columns(2)
 
 CHART_BASE = dict(
@@ -416,10 +423,13 @@ with col_chart2:
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
+
 # ==========================================
 # 10. PETA JARINGAN EKOSISTEM (KOTAK PUTIH NORMAL)
 # ==========================================
 st.write("")
+
+# Kotak ini ada di luar `st.columns`, jadi CSS gambar TIDAK akan mempengaruhinya!
 with st.container(border=True): 
     col_title, col_filter_net = st.columns([3, 1])
     
@@ -439,7 +449,6 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
-            # === PERBAIKAN TOTAL SINTAKSIS PANDAS (KURUNG SIKU DIPISAH) ===
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             

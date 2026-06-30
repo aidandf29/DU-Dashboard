@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - BERSIH (TANPA CSS :has() YANG BIKIN ERROR)
+# 3. CSS CUSTOM - FIX MAROON GLASS DENGAN BORDER TEBAL & SHADOW
 # ==========================================
 st.markdown("""
 <style>
@@ -39,7 +39,7 @@ st.markdown("""
 footer { display: none !important; }
 .header-anchor { display: none !important; }
 
-/* LEBARKAN KONTEN */
+/* LEBARKAN KONTEN APLIKASI */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -48,12 +48,12 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* BACKGROUND UTAMA APLIKASI ABU-ABU TERANG BERSIH */
+/* BACKGROUND UTAMA DASHBOARD (ABU-ABU NETRAL BERSIH) */
 .stApp { 
     background-color: #f1f5f9 !important; 
 }
 
-/* KARTU METRIC ATAS (SOLID PUTIH) */
+/* KARTU METRIC RINGKASAN ATAS (SOLID PUTIH) */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -63,7 +63,7 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* SEMUA KOTAK CONTAINER TERMASUK PETA JARINGAN DISET PUTIH SOLID DULU */
+/* SETTINGAN DASAR SEMUA KOTAK CONTAINER (Peta Jaringan Tetap Putih Solid) */
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -73,29 +73,25 @@ footer { display: none !important; }
     padding: 20px !important;
 }
 
-/* ============================================
-   GLASS EFFECT - HERO CARD (Dashboard Pemantauan Dealer Utama)
-   Kotak judul + baris KPI di bawahnya, warna solid biru muda
-   (bukan transparan) supaya konsisten dan stabil.
-   ============================================ */
-.glass-hero {
-    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-    border: 1px solid rgba(191, 219, 254, 0.8);
-    border-top: 4px solid #0ea5e9;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.20);
-    padding: 20px 24px;
-}
-.glass-kpi-card {
-    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-    border: 1px solid rgba(191, 219, 254, 0.8);
-    border-top: 4px solid #0ea5e9;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.20);
-    padding: 16px 18px;
+/* TARGET MUTLAK ANTI-GAGAL: HANYA KOTAK DI DALAM STCOLUMN (LEADERBOARD) */
+/* Menggunakan multi-selector resmi Streamlit untuk menjamin kompatibilitas browser */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
+div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
+    /* Perpaduan Transparansi Light Maroon Glass */
+    background: linear-gradient(135deg, rgba(136, 19, 55, 0.15) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 16px !important;
+    
+    /* Spesifikasi Border Tebal Warna Maroon Tegas */
+    border: 3px solid #881337 !important; 
+    border-top: 5px solid #4c0519 !important; 
+    
+    /* Spesifikasi Heavy Shadow Mendalam */
+    box-shadow: 0 20px 25px -5px rgba(136, 19, 55, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* CUSTOM NAVBAR */
+/* NAVBAR BRANDING STYLE */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
@@ -233,7 +229,7 @@ else:
 
 with col_hero:
     st.markdown(f"""
-    <div class="glass-hero" style="font-family: 'Inter', sans-serif;">
+    <div style="font-family: 'Inter', sans-serif;">
         <div style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pemantauan Dealer Utama</div>
         <p style="font-size: 13px; color: #475569; font-weight: 500; margin-top: 0;">{periode_teks}</p>
     </div>
@@ -297,7 +293,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# LOG TERMINAL
+# Cetak log bank bermasalah ke terminal background
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
 print("\n" + "="*50)
 print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
@@ -316,7 +312,6 @@ VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; mar
 
 with col_donut:
     with st.container():
-        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Komposisi Aktivitas Pasar"), unsafe_allow_html=True)
         
         donut_labels = ['DU', 'Non-DU', 'Non-Bank', '']
@@ -342,31 +337,25 @@ with col_donut:
             )]
         )
         st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
-        st.markdown('</div>', unsafe_allow_html=True)
 
 with c1:
     with st.container():
-        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Total Volume DU (Repo)"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"Rp {total_volume_t:.2f} T"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
 
 with c2:
     with st.container():
-        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Rata-rata Kepatuhan"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{avg_kepatuhan:.1f}%"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
 
 with c3:
     with st.container():
-        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ==========================================
-# 9. PAPAN PERINGKAT (DENGAN PENANDA JS TARGET)
+# 9. PAPAN PERINGKAT (LEADERBOARD MAROON GLASS)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -384,7 +373,7 @@ df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
 df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
-    with st.container(border=True):
+    with st.container(border=True): 
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
@@ -413,7 +402,7 @@ df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
-    with st.container(border=True):
+    with st.container(border=True): 
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
@@ -435,11 +424,10 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (TETAP PUTIH NORMAL)
+# 10. PETA JARINGAN EKOSISTEM (KOTAK PUTIH NORMAL)
 # ==========================================
 st.write("")
 with st.container(border=True): 
-    # Karena tidak diberi marker khusus, JS tidak akan mewarnai kotak ini
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
@@ -458,6 +446,7 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
+            # Penggabungan Pandas yang sudah diperbaiki total dari typo kurung siku
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             
@@ -554,12 +543,3 @@ with st.container(border=True):
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=500) 
             )
             st.plotly_chart(fig_net, use_container_width=True, config={'displayModeBar': False})
-
-
-# ==========================================
-# 11. (SUDAH TIDAK DIPERLUKAN)
-# Pendekatan JS injeksi dihapus karena marker div tidak
-# terjangkau oleh querySelectorAll (kemungkinan Shadow DOM).
-# Diganti dengan pendekatan CSS murni (.glass-card / .glass-card-body)
-# yang sepenuhnya independen dari struktur DOM internal Streamlit.
-# ==========================================

@@ -19,23 +19,15 @@ st.set_page_config(
 # 2. KONFIGURASI ICON CUSTOM 
 # ==========================================
 ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
-ICON_LOGO_SIZE = 32
-
 ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"
-ICON_NOTIF_SIZE = 28
-
 ICON_VOLUME_URL = "https://api.iconify.design/fluent-emoji-high-contrast/coin.svg?color=%230f172a"
-ICON_VOLUME_SIZE = 22
-
 ICON_INKLUSIF_URL = "https://api.iconify.design/carbon/help-desk.svg?color=%230f172a"
-ICON_INKLUSIF_SIZE = 22
-
 ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
+ICON_LOGO_SIZE = 32
+ICON_NOTIF_SIZE = 28
+ICON_VOLUME_SIZE = 22
+ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
-
-# Icon Baru untuk Hover Plotly
-ICON_CHECK_URL = "https://api.iconify.design/mdi/check-bold.svg?color=%2310b981"
-ICON_CROSS_URL = "https://api.iconify.design/at-icons/cross.svg?color=%23ef4444"
 
 # ==========================================
 # 3. CSS CUSTOM - SUPER GLASSMORPHISM LIGHT BLUE TINT
@@ -287,10 +279,16 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# Cari daftar bank DU yang tidak patuh
+# ==========================================
+# ⚡ DEBUGGING / LOG CONSOLE TERMINAL OTOMATIS
+# ==========================================
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
-teks_hover_tooltip = ", ".join(bank_tidak_patuh_list) if bank_tidak_patuh_list else "Semua DU Patuh"
-
+print("\n" + "="*50)
+print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
+print(f"Total Universe DU: {total_universe_du} Bank")
+print(f"Jumlah DU Tidak Patuh: {jumlah_bermasalah} Bank")
+print(f"Daftar Nomor Bank DU Yang Tidak Patuh: {bank_tidak_patuh_list}")
+print("="*50 + "\n")
 
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
@@ -343,26 +341,10 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
-# ---> TOOLTIP INFO BANK TIDAK PATUH SAAT HOVER KURSOR <---
-st.markdown(f"""
-<div style="
-    background: rgba(239, 68, 68, 0.08); 
-    border: 1px solid rgba(239, 68, 68, 0.2); 
-    padding: 10px 15px; 
-    border-radius: 8px; 
-    font-size: 13px; 
-    color: #991b1b; 
-    display: inline-block;
-    margin-bottom: 20px;
-    cursor: help;" 
-    title="Daftar Sandi Bank Tidak Patuh: {teks_hover_tooltip}">
-    ⚠️ <b>Peti Kemas Pengawasan:</b> Arahkan kursor (*hover*) ke kotak ini untuk melihat daftar nomor Bank DU yang berstatus tidak patuh.
-</div>
-""", unsafe_allow_html=True)
-
 # ==========================================
 # 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA YANG DIPERTAMJAM)
 # ==========================================
+st.write("")
 col_chart1, col_chart2 = st.columns(2)
 
 CHART_BASE = dict(
@@ -488,7 +470,7 @@ with st.container(border=True):
 
             node_x, node_y, node_color, node_size, node_hover_text = [], [], [], [], []
             
-            # ---> MENYUSUN TEKS HOVER MENGGUNAKAN ICONIFY <---
+            # ---> MENYUSUN TEKS HOVER MENGGUNAKAN SIMBOL UNICODE <---
             for node in G.nodes():
                 x, y = pos[node]
                 node_x.append(x); node_y.append(y)
@@ -503,11 +485,11 @@ with st.container(border=True):
                     du_trans = int(compliance_check.loc[node_str, 'DU']) if node_str in compliance_check.index else 0
                     non_du_trans = int(compliance_check.loc[node_str, 'NON DU']) if node_str in compliance_check.index else 0
                     
-                    # Logic inject Iconify
+                    # Menggunakan Simbol Unicode Emojis OS agar ter-render sempurna di Plotly
                     if (node_str in compliance_check.index and compliance_check.loc[node_str, 'Patuh']):
-                        is_patuh = f"<img src='{ICON_CHECK_URL}' width='12' align='center'> PATUH"
+                        is_patuh = "✅ PATUH"
                     else:
-                        is_patuh = f"<img src='{ICON_CROSS_URL}' width='12' align='center'> TIDAK PATUH"
+                        is_patuh = "❌ TIDAK PATUH"
                     
                     node_hover_text.append(
                         f"<b>Bank DU: {node_str}</b><br>"

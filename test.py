@@ -221,53 +221,68 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM (REVISED ALGORITHM)
+# 7. PERHITUNGAN KPI UMUM (REVISED & CLEAN ALGORITHM)
 # ==========================================
 
-# A & B. Agregasi Status Prioritas & Populasi Dinamis
-lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'STATUS'})
-borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'STATUS'})
-status_map = pd.concat([lender_map, borrower_map]).dropna()
-status_map['STATUS'] = status_map['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
+# A. Membuat Master Status yang 100% Bersih (Hanya Berpatokan pada Kolom Lender resmi)
+df_lender_status = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].dropna().drop_duplicates()
+df_lender_status['STATUS DU CASH LENDER'] = df_lender_status['STATUS DU CASH LENDER'].astype(str).str.upper().str.strip()
 
-status_dict = status_map.groupby('ID')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
+# Ambil list Bank yang terverifikasi resmi sebagai DU di periode ini
+du_list = df_lender_status[df_lender_status['STATUS DU CASH LENDER'] == 'DU']['SANDI CASH LENDER (Masked)'].unique().tolist()
+du_list_str = [str(b) for b in du_list]
 
-all_banks_status = pd.Series(status_dict)
-du_list = all_banks_status[all_banks_status == 'DU'].index.tolist()
+# Buat kamus status untuk semua bank yang aktif bertransaksi
+all_active_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
+status_dict = {str(bank): ('DU' if str(bank) in du_list_str else 'NON DU') for bank in all_active_banks}
+
+# B. Hitung Populasi Bank Secara Dinamis Berdasarkan Data Real Periode Terpilih
 total_du_banks = len(du_list)
-non_du_count = len(all_banks_status) - total_du_banks
-total_banks = total_du_banks + non_du_count
+total_banks_in_period = len(all_active_banks)
+non_du_count = total_banks_in_period - total_du_banks
 
-# C. Penyatuan Graf Relasi
+# C. Gabungkan Hubungan Dua Arah Tanpa Memandang Posisi Lender/Borrower
 rels = pd.concat([
     df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
     df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
-]).drop_duplicates()
+]).dropna().drop_duplicates()
 
+# Pastikan tipe data string agar proses mapping akurat
+rels['Bank'] = rels['Bank'].astype(str)
+rels['Counterparty'] = rels['Counterparty'].astype(str)
+
+# Petakan status menggunakan kamus yang telah dibersihkan
 rels['Bank_Status'] = rels['Bank'].map(status_dict)
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
-# D. Perhitungan Counterparty Unik per DU
-du_rels = rels[rels['Bank_Status'] == 'DU']
+# D. Filter Hubungan Transaksi Khusus untuk Aktor Utama yang Berstatus DU Resmi
+du_rels = rels[rels['Bank'].isin(du_list_str)]
+
+# E. Hitung Jumlah Unik Counterparty (Lawan Transaksi) Per Bank DU
 counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
-# E. Injeksi Entitas Pasif & Evaluasi Boolean
-compliance_check = pd.DataFrame(index=du_list)
+# Pastikan kolom DU dan NON DU tersedia di dataframe hasil pengelompokan
+if 'DU' not in counts.columns: counts['DU'] = 0
+if 'NON DU' not in counts.columns: counts['NON DU'] = 0
+
+# F. Masukkan Semua Daftar DU Resmi ke Tabel Evaluasi (Termasuk yang Pasif/0 Transaksi)
+compliance_check = pd.DataFrame(index=du_list_str)
 compliance_check = compliance_check.join(counts).fillna(0)
 
-if 'DU' not in compliance_check.columns: compliance_check['DU'] = 0
-if 'NON DU' not in compliance_check.columns: compliance_check['NON DU'] = 0
-
+# G. Tentukan Kepatuhan: Wajib memiliki minimal 5 lawan DU DAN 5 lawan Non-DU
 compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
 
-# F. Final KPI
+# H. Rekapitulasi Akhir Nilai KPI Dashboard
 lender_patuh_count = compliance_check['Patuh'].sum()
 jumlah_bermasalah = total_du_banks - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
+
+# Hitung Total Volume Transaksi (Dalam Triliun Rp)
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
+
 # ==========================================
-# 8. KPI CARDS + HALF DOUGHNUT CHART (STATIS)
+# 8. KPI CARDS + HALF DOUGHNUT CHART (DYNAMIC)
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
@@ -278,12 +293,13 @@ with col_donut:
     with st.container():
         st.markdown(LABEL_HTML.format("Komposisi Bank"), unsafe_allow_html=True)
         
-        total_banks = 105
-        du_count = 21
-        non_du_count = 84
+        # Menggunakan variabel dinamis hasil kalkulasi algoritma baru
+        total_banks = total_banks_in_period
+        du_cnt = total_du_banks
+        non_du_cnt = non_du_count
         
         donut_labels = ['DU', 'Non-DU', '']
-        donut_values = [du_count, non_du_count, total_banks] 
+        donut_values = [du_cnt, non_du_cnt, total_banks] 
         donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
         line_colors = ['#ffffff', '#ffffff', 'rgba(0,0,0,0)']
         line_widths = [2, 2, 0]

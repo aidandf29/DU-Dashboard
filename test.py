@@ -221,46 +221,49 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM
+# 7. PERHITUNGAN KPI UMUM (REVISED ALGORITHM)
 # ==========================================
 
-# A. Buat Master Map Status Bank
+# A & B. Agregasi Status Prioritas & Populasi Dinamis
 lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'STATUS'})
 borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'STATUS'})
-status_map = pd.concat([lender_map, borrower_map]).drop_duplicates()
+status_map = pd.concat([lender_map, borrower_map]).dropna()
 status_map['STATUS'] = status_map['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
-status_dict = status_map.set_index('ID')['STATUS'].to_dict()
 
-# B. Gabungkan semua hubungan (Lender->Borrower dan Borrower->Lender)
+status_dict = status_map.groupby('ID')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
+
+all_banks_status = pd.Series(status_dict)
+du_list = all_banks_status[all_banks_status == 'DU'].index.tolist()
+total_du_banks = len(du_list)
+non_du_count = len(all_banks_status) - total_du_banks
+total_banks = total_du_banks + non_du_count
+
+# C. Penyatuan Graf Relasi
 rels = pd.concat([
     df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
     df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
 ]).drop_duplicates()
 
-# C. Tambahkan status pada relasi
-rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 rels['Bank_Status'] = rels['Bank'].map(status_dict)
+rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
-# D. Filter hanya untuk Bank yang berstatus 'DU'
+# D. Perhitungan Counterparty Unik per DU
 du_rels = rels[rels['Bank_Status'] == 'DU']
+counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
-# E. Hitung jumlah unik counterparty per Bank DU
-compliance_check = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
+# E. Injeksi Entitas Pasif & Evaluasi Boolean
+compliance_check = pd.DataFrame(index=du_list)
+compliance_check = compliance_check.join(counts).fillna(0)
 
-# F. Pastikan kolom DU dan NON DU ada
 if 'DU' not in compliance_check.columns: compliance_check['DU'] = 0
 if 'NON DU' not in compliance_check.columns: compliance_check['NON DU'] = 0
 
-# G. Definisi Patuh: Minimal 5 DU dan 5 Non DU
 compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
 
-# H. Update KPI
-total_du_banks = len(compliance_check)
+# F. Final KPI
 lender_patuh_count = compliance_check['Patuh'].sum()
-avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
 jumlah_bermasalah = total_du_banks - lender_patuh_count
-
-# Update Total Volume
+avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
 # ==========================================

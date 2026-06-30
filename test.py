@@ -34,7 +34,7 @@ ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - EFEK GLASSMORPHISM YANG DIPERTAMJAM
+# 3. CSS CUSTOM - SUPER GLASSMORPHISM LIGHT BLUE TINT
 # ==========================================
 st.markdown("""
 <style>
@@ -54,7 +54,7 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* GRADIENT BACKGROUND KONTRAST */
+/* GRADIENT BACKGROUND UNTUK MELIHAT EFEK TEMBUS PANDANG */
 .stApp { 
     background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important; 
 }
@@ -69,15 +69,15 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* DESAIN EFEK GLASSMORPHISM BARU (AGAK DIABUIN & LEBIH FROSTED) */
+/* EFEK GLASSMORPHISM DENGAN TINT LIGHT BLUE TRANSPARAN & FROSTED TEGAS */
 [data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(241, 245, 249, 0.65) !important; /* Menggunakan tint warna abu-abu slate transparan */
-    backdrop-filter: blur(20px) !important; /* Efek blur frosted diperkuat */
+    background: rgba(219, 234, 254, 0.55) !important; /* Campuran warna light blue transparan */
+    backdrop-filter: blur(20px) !important; /* Efek buram pekat */
     -webkit-backdrop-filter: blur(20px) !important;
     border-radius: 16px !important;
-    border: 1px solid rgba(148, 163, 184, 0.5) !important; /* Garis tepi abu-abu dipertegas */
-    border-top: 4px solid #1e3a5f !important; /* Aksen garis atas tetap tegas */
-    box-shadow: 0 12px 36px 0 rgba(15, 23, 42, 0.1) !important; /* Bayangan diperdalam */
+    border: 1px solid rgba(147, 197, 253, 0.5) !important; /* Garis tepi light blue tipis */
+    border-top: 4px solid #1e3a5f !important; /* Garis tegas bagian atas kartu */
+    box-shadow: 0 12px 36px 0 rgba(15, 23, 42, 0.12) !important; /* Bayangan pop-out mendalam */
     padding: 20px !important;
 }
 
@@ -283,6 +283,11 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
+# Cari daftar bank DU yang tidak patuh
+bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
+teks_hover_tooltip = ", ".join(bank_tidak_patuh_list) if bank_tidak_patuh_list else "Semua DU Patuh"
+
+
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
 # ==========================================
@@ -334,10 +339,26 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
+# ---> TOOLTIP INFO BANK TIDAK PATUH SAAT HOVER KURSOR <---
+st.markdown(f"""
+<div style="
+    background: rgba(239, 68, 68, 0.08); 
+    border: 1px solid rgba(239, 68, 68, 0.2); 
+    padding: 10px 15px; 
+    border-radius: 8px; 
+    font-size: 13px; 
+    color: #991b1b; 
+    display: inline-block;
+    margin-bottom: 20px;
+    cursor: help;" 
+    title="Daftar Sandi Bank Tidak Patuh: {teks_hover_tooltip}">
+    ⚠️ <b>Peti Kemas Pengawasan:</b> Arahkan kursor (*hover*) ke kotak ini untuk melihat daftar nomor Bank DU yang berstatus tidak patuh.
+</div>
+""", unsafe_allow_html=True)
+
 # ==========================================
 # 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA YANG DIPERTAMJAM)
 # ==========================================
-st.write("")
 col_chart1, col_chart2 = st.columns(2)
 
 CHART_BASE = dict(
@@ -346,7 +367,6 @@ CHART_BASE = dict(
     xaxis_visible=False, yaxis_title=None,
 )
 
-# Leaderboard 1: Volume Terbesar (Khusus DU)
 df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
 df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
 df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
@@ -374,7 +394,6 @@ with col_chart1:
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
 
-# Leaderboard 2: Inklusivitas / Risk-Taking (Khusus DU)
 lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
 small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
 df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
@@ -406,7 +425,7 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (EFEK KACA)
+# 10. PETA JARINGAN EKOSISTEM (EFEK KACA + HOVER INFO DU)
 # ==========================================
 st.write("")
 with st.container(border=True): 
@@ -463,29 +482,50 @@ with st.container(border=True):
 
             edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=0.5, color='#cbd5e1'), hoverinfo='none', mode='lines')
 
-            node_x, node_y, node_color, node_size = [], [], [], []
+            node_x, node_y, node_color, node_size, node_hover_text = [], [], [], [], []
+            
+            # ---> MENYUSUN TEKS HOVER KHUSUS UNTUK SETIAP NODE <---
             for node in G.nodes():
                 x, y = pos[node]
                 node_x.append(x); node_y.append(y)
                 
-                status = status_dict.get(str(node), 'NON DU')
+                node_str = str(node)
+                status = status_dict.get(node_str, 'NON DU')
                 
                 if status == 'DU':
                     node_color.append('#1e3a5f') 
-                    node_size.append(26 if str(node) == selected_bank else 14)
+                    node_size.append(26 if node_str == selected_bank else 14)
+                    
+                    # Ambil informasi kepatuhan dari DataFrame evaluasi sebelumnya
+                    du_trans = int(compliance_check.loc[node_str, 'DU']) if node_str in compliance_check.index else 0
+                    non_du_trans = int(compliance_check.loc[node_str, 'NON DU']) if node_str in compliance_check.index else 0
+                    is_patuh = "✅ PATUH" if (node_str in compliance_check.index and compliance_check.loc[node_str, 'Patuh']) else "❌ TIDAK PATUH"
+                    
+                    # Buat teks popup saat di-hover
+                    node_hover_text.append(
+                        f"<b>Bank DU: {node_str}</b><br>"
+                        f"Status: {is_patuh}<br>"
+                        f"🔥 Transaksi DU: {du_trans} (Min. 5)<br>"
+                        f"🌐 Transaksi Non-DU: {non_du_trans} (Min. 5)"
+                    )
+                    
                 elif status == 'NON BANK':
                     node_color.append('#f59e0b') 
-                    node_size.append(26 if str(node) == selected_bank else 12)
+                    node_size.append(26 if node_str == selected_bank else 12)
+                    node_hover_text.append(f"<b>Lembaga Non-Bank: {node_str}</b>")
                 else:
                     node_color.append('#0ea5e9') 
-                    node_size.append(26 if str(node) == selected_bank else 12) 
+                    node_size.append(26 if node_str == selected_bank else 12) 
+                    node_hover_text.append(f"<b>Bank Non-DU: {node_str}</b>")
 
             line_colors = ['#f59e0b' if str(node) == selected_bank else 'white' for node in G.nodes()]
             line_widths = [3 if str(node) == selected_bank else 1 for node in G.nodes()]
 
             node_trace = go.Scatter(
-                x=node_x, y=node_y, mode='markers+text', hoverinfo='text',
-                text=list(G.nodes()),
+                x=node_x, y=node_y, mode='markers+text',
+                hoverinfo='text',  # Mode hover diaktifkan
+                text=list(G.nodes()), 
+                hovertext=node_hover_text, # Memasukkan teks custom yang kita racik di atas
                 textfont=dict(color="#0f172a", size=10),
                 textposition="bottom center",
                 marker=dict(

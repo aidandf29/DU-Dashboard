@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - PREMIUM GLASSMORPHISM
+# 3. CSS CUSTOM - GLASSMORPHISM HANYA DI KOTAK LEADERBOARD
 # ==========================================
 st.markdown("""
 <style>
@@ -48,16 +48,14 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* 1. BACKGROUND APLIKASI NETRAL BERPOLA (Rahasia agar efek blur kaca terlihat nyata) */
+/* 1. BACKGROUND APLIKASI KEMBALI NORMAL BERSIH (TIDAK IKUT BIRU) */
 .stApp { 
-    background-color: #f8fafc !important;
-    background-image: radial-gradient(#cbd5e1 1px, transparent 1px) !important;
-    background-size: 24px 24px !important;
+    background-color: #f8fafc !important; 
 }
 
-/* 2. KARTU METRIC ATAS (SOLID PUTIH AGAR KONTRAST DENGAN KACA) */
+/* 2. KARTU METRIC ATAS (SOLID PUTIH BERSIH) */
 [data-testid="metric-container"] {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+    background-color: #ffffff !important;
     border-radius: 12px !important;
     border: none !important; 
     border-top: 4px solid #1e3a5f !important;
@@ -65,23 +63,18 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* 3. KOTAK LEADERBOARD & GRAPH (PREMIUM LIGHT BLUE GLASS) */
+/* 3. KOTAK LEADERBOARD & GRAPH (KHUSUS INI YANG JADI KACA LIGHT BLUE) */
 [data-testid="stVerticalBlockBorderWrapper"] {
-    /* Gradien kaca dari light blue ke transparan */
-    background: linear-gradient(135deg, rgba(219, 234, 254, 0.45) 0%, rgba(239, 246, 255, 0.15) 100%) !important;
-    
-    /* Efek buram pekat dan saturasi warna di belakangnya ditarik */
-    backdrop-filter: blur(16px) saturate(1.2) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
-    
+    /* Gradient light blue eksklusif hanya di kotaknya saja */
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.7) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     border-radius: 16px !important;
-    
-    /* Pantulan cahaya kaca di pinggiran (Rim Light Putih) */
-    border: 1px solid rgba(255, 255, 255, 0.7) !important; 
+    /* Efek pantulan cahaya kaca */
+    border: 1px solid rgba(255, 255, 255, 0.9) !important; 
     border-top: 4px solid #1e3a5f !important; 
-    
-    /* Bayangan elegan agar melayang */
-    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08) !important; 
+    /* Shadow luar melayang + Inner shadow putih ala acrylic glass */
+    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.06), inset 0 2px 6px rgba(255, 255, 255, 0.6) !important; 
     padding: 20px !important;
 }
 
@@ -287,7 +280,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# Cari daftar bank DU yang tidak patuh (Terminal Log)
+# Cari daftar bank DU yang tidak patuh (Log ke Terminal Console)
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
 print("\n" + "="*50)
 print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
@@ -347,8 +340,9 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
+
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD PREMIUM GLASS)
+# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA YANG DIPERTAMJAM)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -417,7 +411,7 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (PREMIUM GLASS)
+# 10. PETA JARINGAN EKOSISTEM (EFEK KACA + HOVER INFO DU)
 # ==========================================
 st.write("")
 with st.container(border=True): 

@@ -494,8 +494,8 @@ with st.container(border=True):
                     node_hover_text.append(
                         f"<b>Bank DU: {node_str}</b><br>"
                         f"Status: {is_patuh}<br>"
-                        f"Transaksi DU: {du_trans} (Min. 5)<br>"
-                        f"Transaksi Non-DU: {non_du_trans} (Min. 5)"
+                        f"Transaksi DU: {du_trans}<br>"
+                        f"Transaksi Non-DU: {non_du_trans}"
                     )
                     
                 elif status == 'NON BANK':

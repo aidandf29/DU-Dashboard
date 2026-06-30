@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import networkx as nx
-import streamlit.components.v1 as components # <-- IMPORT BARU UNTUK INJEKSI JS
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN (WIDE)
@@ -31,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - BERSIH (TANPA CSS :has() YANG BIKIN ERROR)
+# 3. CSS CUSTOM - STRUKTURAL KACA LEADERBOARD (ANTI-GAGAL)
 # ==========================================
 st.markdown("""
 <style>
@@ -40,7 +39,7 @@ st.markdown("""
 footer { display: none !important; }
 .header-anchor { display: none !important; }
 
-/* LEBARKAN KONTEN */
+/* LEBARKAN KONTEN INTERFASIAL */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -49,16 +48,12 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* BACKGROUND UTAMA APLIKASI - SEDIKIT TEKSTUR AGAR EFEK GLASS DI LEADERBOARD TERLIHAT */
+/* 1. BACKGROUND UTAMA DASHBOARD */
 .stApp { 
-    background-color: #f1f5f9 !important;
-    background-image: 
-        radial-gradient(circle at 15% 20%, rgba(191, 219, 254, 0.35) 0%, transparent 35%),
-        radial-gradient(circle at 85% 75%, rgba(219, 234, 254, 0.30) 0%, transparent 40%) !important;
-    background-attachment: fixed !important;
+    background-color: #f1f5f9 !important; 
 }
 
-/* KARTU METRIC ATAS (SOLID PUTIH) */
+/* 2. KARTU METRIC RINGKASAN EKSEKUTIF */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -68,7 +63,7 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* SEMUA KOTAK CONTAINER TERMASUK PETA JARINGAN DISET PUTIH SOLID DULU */
+/* 3. SETTINGAN DASAR SEMUA KOTAK (Default: Peta Jaringan Menjadi Putih Bersih) */
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -76,10 +71,21 @@ footer { display: none !important; }
     border-top: 4px solid #1e3a5f !important;
     box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05) !important;
     padding: 20px !important;
-    transition: all 0.3s ease; /* Transisi agar pergantian warna oleh JS terlihat smooth */
 }
 
-/* CUSTOM NAVBAR */
+/* 4. OVERRIDE STRUKTURAL: KHUSUS KOTAK LEADERBOARD (Karena Berada di Dalam Komponen Kolom) */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
+    /* Campuran warna kaca light blue dengan opacity presisi */
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.85) 0%, rgba(239, 246, 255, 0.55) 100%) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 16px !important;
+    border: 1px solid #bfdbfe !important; 
+    border-top: 4px solid #0ea5e9 !important; /* Aksen garis atas biru cerah khas Leaderboard */
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.12) !important; 
+}
+
+/* NAVBAR BRANDING STYLE */
 .nav-container {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
@@ -281,7 +287,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# LOG TERMINAL
+# LOG CONSOLE TERMINAL TERMINAL BACKGROUND
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
 print("\n" + "="*50)
 print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
@@ -342,7 +348,7 @@ with c3:
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
 # ==========================================
-# 9. PAPAN PERINGKAT (DENGAN PENANDA JS TARGET)
+# 9. PAPAN PERINGKAT (LEADERBOARD EFEK KACA STRUKTURAL)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -361,9 +367,6 @@ df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
     with st.container(border=True): 
-        # ---> PENANDA KACA LEADERBOARD UNTUK JAVASCRIPT <---
-        st.markdown("<div class='target-glass-leaderboard'></div>", unsafe_allow_html=True)
-        
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
@@ -393,9 +396,6 @@ df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
     with st.container(border=True): 
-        # ---> PENANDA KACA LEADERBOARD UNTUK JAVASCRIPT <---
-        st.markdown("<div class='target-glass-leaderboard'></div>", unsafe_allow_html=True)
-        
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
@@ -417,11 +417,10 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (TETAP PUTIH NORMAL)
+# 10. PETA JARINGAN EKOSISTEM (KOTAK PUTIH NORMAL)
 # ==========================================
 st.write("")
 with st.container(border=True): 
-    # Karena tidak diberi marker khusus, JS tidak akan mewarnai kotak ini
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
@@ -440,6 +439,7 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
+            # === PERBAIKAN TOTAL SINTAKSIS PANDAS (KURUNG SIKU DIPISAH) ===
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             
@@ -536,39 +536,3 @@ with st.container(border=True):
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=500) 
             )
             st.plotly_chart(fig_net, use_container_width=True, config={'displayModeBar': False})
-
-
-# ==========================================
-# 11. INJEKSI JAVASCRIPT: TARGETING KACA MUTLAK ANTI GAGAL
-# ==========================================
-components.html("""
-<script>
-(function() {
-    function applyGlassEffect() {
-        const markers = window.parent.document.querySelectorAll('.target-glass-leaderboard');
-        markers.forEach(marker => {
-            let wrapper = marker.closest('[data-testid="stVerticalBlockBorderWrapper"]');
-            if (wrapper && !wrapper.dataset.glassApplied) {
-                wrapper.style.setProperty('background', 'linear-gradient(135deg, rgba(219, 234, 254, 0.65) 0%, rgba(239, 246, 255, 0.45) 100%)', 'important');
-                wrapper.style.setProperty('backdrop-filter', 'blur(16px) saturate(180%)', 'important');
-                wrapper.style.setProperty('-webkit-backdrop-filter', 'blur(16px) saturate(180%)', 'important');
-                wrapper.style.setProperty('border', '1px solid rgba(191, 219, 254, 0.8)', 'important');
-                wrapper.style.setProperty('border-top', '4px solid #0ea5e9', 'important');
-                wrapper.style.setProperty('border-radius', '16px', 'important');
-                wrapper.style.setProperty('box-shadow', '0 20px 40px -10px rgba(37, 99, 235, 0.25), 0 8px 16px -8px rgba(15, 23, 42, 0.15)', 'important');
-                wrapper.dataset.glassApplied = "true";
-            }
-        });
-    }
-
-    // Jalankan berkali-kali untuk menangkap render ulang Streamlit
-    applyGlassEffect();
-    const interval = setInterval(applyGlassEffect, 300);
-    setTimeout(() => clearInterval(interval), 8000); // stop setelah 8 detik, cukup untuk semua render awal
-
-    // Jaga-jaga kalau ada re-render setelah interaksi user (ganti periode/filter)
-    const observer = new MutationObserver(applyGlassEffect);
-    observer.observe(window.parent.document.body, { childList: true, subtree: true });
-})();
-</script>
-""", height=0, width=0)

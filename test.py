@@ -33,6 +33,10 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_URL = "https://api.iconify.design/lucide-lab/spider-web.svg?color=%230f172a"
 ICON_NET_SIZE = 24
 
+# Icon Baru untuk Hover Plotly
+ICON_CHECK_URL = "https://api.iconify.design/mdi/check-bold.svg?color=%2310b981"
+ICON_CROSS_URL = "https://api.iconify.design/at-icons/cross.svg?color=%23ef4444"
+
 # ==========================================
 # 3. CSS CUSTOM - SUPER GLASSMORPHISM LIGHT BLUE TINT
 # ==========================================
@@ -484,7 +488,7 @@ with st.container(border=True):
 
             node_x, node_y, node_color, node_size, node_hover_text = [], [], [], [], []
             
-            # ---> MENYUSUN TEKS HOVER KHUSUS UNTUK SETIAP NODE <---
+            # ---> MENYUSUN TEKS HOVER MENGGUNAKAN ICONIFY <---
             for node in G.nodes():
                 x, y = pos[node]
                 node_x.append(x); node_y.append(y)
@@ -496,17 +500,20 @@ with st.container(border=True):
                     node_color.append('#1e3a5f') 
                     node_size.append(26 if node_str == selected_bank else 14)
                     
-                    # Ambil informasi kepatuhan dari DataFrame evaluasi sebelumnya
                     du_trans = int(compliance_check.loc[node_str, 'DU']) if node_str in compliance_check.index else 0
                     non_du_trans = int(compliance_check.loc[node_str, 'NON DU']) if node_str in compliance_check.index else 0
-                    is_patuh = "✅ PATUH" if (node_str in compliance_check.index and compliance_check.loc[node_str, 'Patuh']) else "❌ TIDAK PATUH"
                     
-                    # Buat teks popup saat di-hover
+                    # Logic inject Iconify
+                    if (node_str in compliance_check.index and compliance_check.loc[node_str, 'Patuh']):
+                        is_patuh = f"<img src='{ICON_CHECK_URL}' width='12' align='center'> PATUH"
+                    else:
+                        is_patuh = f"<img src='{ICON_CROSS_URL}' width='12' align='center'> TIDAK PATUH"
+                    
                     node_hover_text.append(
                         f"<b>Bank DU: {node_str}</b><br>"
                         f"Status: {is_patuh}<br>"
-                        f"🔥 Transaksi DU: {du_trans} (Min. 5)<br>"
-                        f"🌐 Transaksi Non-DU: {non_du_trans} (Min. 5)"
+                        f"Transaksi DU: {du_trans} (Min. 5)<br>"
+                        f"Transaksi Non-DU: {non_du_trans} (Min. 5)"
                     )
                     
                 elif status == 'NON BANK':
@@ -523,9 +530,9 @@ with st.container(border=True):
 
             node_trace = go.Scatter(
                 x=node_x, y=node_y, mode='markers+text',
-                hoverinfo='text',  # Mode hover diaktifkan
+                hoverinfo='text',  
                 text=list(G.nodes()), 
-                hovertext=node_hover_text, # Memasukkan teks custom yang kita racik di atas
+                hovertext=node_hover_text,
                 textfont=dict(color="#0f172a", size=10),
                 textposition="bottom center",
                 marker=dict(

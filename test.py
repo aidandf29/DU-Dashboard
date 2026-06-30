@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - GLASSMORPHISM HANYA DI KOTAK LEADERBOARD
+# 3. CSS CUSTOM - GLASSMORPHISM EKSKLUSIF LEADERBOARD
 # ==========================================
 st.markdown("""
 <style>
@@ -39,7 +39,7 @@ st.markdown("""
 footer { display: none !important; }
 .header-anchor { display: none !important; }
 
-/* LEBARKAN KONTEN */
+/* LEBARKAN KONTEN & HAPUS BACKGROUND */
 .block-container {
     max-width: 100% !important; 
     padding-top: 1rem !important;
@@ -48,12 +48,12 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* 1. BACKGROUND APLIKASI KEMBALI NORMAL BERSIH (TIDAK IKUT BIRU) */
+/* 1. BACKGROUND UTAMA APLIKASI KEMBALI ABU-ABU BERSIH (NORMAL) */
 .stApp { 
     background-color: #f8fafc !important; 
 }
 
-/* 2. KARTU METRIC ATAS (SOLID PUTIH BERSIH) */
+/* 2. KARTU METRIC ATAS (SOLID PUTIH) */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -63,18 +63,28 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* 3. KOTAK LEADERBOARD & GRAPH (KHUSUS INI YANG JADI KACA LIGHT BLUE) */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    /* Gradient light blue eksklusif hanya di kotaknya saja */
-    background: linear-gradient(135deg, rgba(219, 234, 254, 0.7) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
+/* 3. KARTU CONTAINER BIASA (SEPERTI PETA JARINGAN) TETAP PUTIH BERSIH */
+[data-testid="stVerticalBlockBorderWrapper"]:not(:has(.glass-leaderboard)) {
+    background-color: #ffffff !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important; 
+    border-top: 4px solid #1e3a5f !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+    padding: 20px !important;
+}
+
+/* 4. EFEK KACA LIGHT BLUE KHUSUS KOTAK LEADERBOARD SAJA */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.glass-leaderboard) {
+    /* Warna Light Blue Transparan dengan efek blur */
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.85) 0%, rgba(239, 246, 255, 0.6) 100%) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border-radius: 16px !important;
-    /* Efek pantulan cahaya kaca */
-    border: 1px solid rgba(255, 255, 255, 0.9) !important; 
+    
+    /* Garis tepi terang ala efek pantulan kaca acrylic */
+    border: 1px solid rgba(255, 255, 255, 1) !important; 
     border-top: 4px solid #1e3a5f !important; 
-    /* Shadow luar melayang + Inner shadow putih ala acrylic glass */
-    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.06), inset 0 2px 6px rgba(255, 255, 255, 0.6) !important; 
+    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08), inset 0 2px 6px rgba(255, 255, 255, 0.6) !important; 
     padding: 20px !important;
 }
 
@@ -280,7 +290,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# Cari daftar bank DU yang tidak patuh (Log ke Terminal Console)
+# === LOG CONSOLE: Cetak Daftar DU Bermasalah ===
 bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
 print("\n" + "="*50)
 print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
@@ -361,6 +371,9 @@ df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
     with st.container(border=True): 
+        # ---> PENANDA KHUSUS UNTUK CSS GLASSMORPHISM <---
+        st.markdown("<div class='glass-leaderboard'></div>", unsafe_allow_html=True)
+        
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
@@ -390,6 +403,9 @@ df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
     with st.container(border=True): 
+        # ---> PENANDA KHUSUS UNTUK CSS GLASSMORPHISM <---
+        st.markdown("<div class='glass-leaderboard'></div>", unsafe_allow_html=True)
+        
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
@@ -411,10 +427,11 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (EFEK KACA + HOVER INFO DU)
+# 10. PETA JARINGAN EKOSISTEM (KEMBALI NORMAL/PUTIH)
 # ==========================================
 st.write("")
 with st.container(border=True): 
+    # TIDAK ADA penanda class='glass-leaderboard', jadi kotak ini warnanya putih solid normal
     col_title, col_filter_net = st.columns([3, 1])
     
     with col_title:
@@ -433,7 +450,7 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
-            all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
+            all_banks = pd.concat([df['SANDI CASH LENDER (Masked)', df['SANDI CASH BORROWER (Masked)']]]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             
             st.write("") 

@@ -49,9 +49,13 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* BACKGROUND UTAMA APLIKASI ABU-ABU TERANG BERSIH */
+/* BACKGROUND UTAMA APLIKASI - SEDIKIT TEKSTUR AGAR EFEK GLASS DI LEADERBOARD TERLIHAT */
 .stApp { 
-    background-color: #f1f5f9 !important; 
+    background-color: #f1f5f9 !important;
+    background-image: 
+        radial-gradient(circle at 15% 20%, rgba(191, 219, 254, 0.35) 0%, transparent 35%),
+        radial-gradient(circle at 85% 75%, rgba(219, 234, 254, 0.30) 0%, transparent 40%) !important;
+    background-attachment: fixed !important;
 }
 
 /* KARTU METRIC ATAS (SOLID PUTIH) */
@@ -539,23 +543,32 @@ with st.container(border=True):
 # ==========================================
 components.html("""
 <script>
-    // Script ini berjalan di latar belakang untuk meretas DOM Streamlit secara aman
-    setTimeout(function() {
+(function() {
+    function applyGlassEffect() {
         const markers = window.parent.document.querySelectorAll('.target-glass-leaderboard');
         markers.forEach(marker => {
-            // Naik ke atas (traverse up) mencari kotak container milik Streamlit
             let wrapper = marker.closest('[data-testid="stVerticalBlockBorderWrapper"]');
-            if (wrapper) {
-                // Terapkan efek kaca Light Blue secara paksa
-                wrapper.style.background = 'linear-gradient(135deg, rgba(219, 234, 254, 0.75) 0%, rgba(239, 246, 255, 0.55) 100%)';
-                wrapper.style.backdropFilter = 'blur(12px)';
-                wrapper.style.webkitBackdropFilter = 'blur(12px)';
-                wrapper.style.border = '1px solid #bfdbfe';
-                wrapper.style.borderTop = '4px solid #0ea5e9';
-                wrapper.style.borderRadius = '16px';
-                wrapper.style.boxShadow = '0 10px 25px -5px rgba(37, 99, 235, 0.15)';
+            if (wrapper && !wrapper.dataset.glassApplied) {
+                wrapper.style.setProperty('background', 'linear-gradient(135deg, rgba(219, 234, 254, 0.65) 0%, rgba(239, 246, 255, 0.45) 100%)', 'important');
+                wrapper.style.setProperty('backdrop-filter', 'blur(16px) saturate(180%)', 'important');
+                wrapper.style.setProperty('-webkit-backdrop-filter', 'blur(16px) saturate(180%)', 'important');
+                wrapper.style.setProperty('border', '1px solid rgba(191, 219, 254, 0.8)', 'important');
+                wrapper.style.setProperty('border-top', '4px solid #0ea5e9', 'important');
+                wrapper.style.setProperty('border-radius', '16px', 'important');
+                wrapper.style.setProperty('box-shadow', '0 20px 40px -10px rgba(37, 99, 235, 0.25), 0 8px 16px -8px rgba(15, 23, 42, 0.15)', 'important');
+                wrapper.dataset.glassApplied = "true";
             }
         });
-    }, 150); // Delay sedikit untuk memastikan halaman Streamlit selesai dirender
+    }
+
+    // Jalankan berkali-kali untuk menangkap render ulang Streamlit
+    applyGlassEffect();
+    const interval = setInterval(applyGlassEffect, 300);
+    setTimeout(() => clearInterval(interval), 8000); // stop setelah 8 detik, cukup untuk semua render awal
+
+    // Jaga-jaga kalau ada re-render setelah interaksi user (ganti periode/filter)
+    const observer = new MutationObserver(applyGlassEffect);
+    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+})();
 </script>
 """, height=0, width=0)

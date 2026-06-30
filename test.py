@@ -136,12 +136,14 @@ def load_excel_data_quarterly():
                 df['SANDI CASH BORROWER (Masked)'] = df['SANDI CASH BORROWER (Masked)'].astype(str).str.strip()
                 
             if 'STATUS PD CASH BORROWER' in df.columns:
-                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
+                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip()
+                
+            if 'STATUS DU CASH LENDER' in df.columns:
+                df['STATUS DU CASH LENDER'] = df['STATUS DU CASH LENDER'].astype(str).str.upper().str.strip()
                 
             if 'TANGGAL TRANSAKSI' in df.columns:
                 df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'], errors='coerce')
                 
-            # --- LOGIKA MEMECAH JADI 3 BULAN (KUARTAL) ---
             if 'BULAN TRANSAKSI' in df.columns and 'TAHUN TRANSAKSI' in df.columns:
                 for label_bulan, sub_df in df.groupby('BULAN TRANSAKSI'):
                     if label_bulan in [1, 2, 3]:
@@ -211,29 +213,41 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM (HARDCODED OFFICIAL LIST)
+# 7. PERHITUNGAN KPI UMUM & KLASIFIKASI ENTITAS
 # ==========================================
 
-# A. Kunci Daftar Nomor/Sandi Bank DU Resmi
+# Master List DU Resmi Pembanding
 DAFTAR_DU_RESMI = ['3', '9', '10', '12', '14', '15', '17', '20', '23', '24', '29', '47', '51', '68', '70', '88', '111', '115', '201', '214', '427']
 
-# B. Identifikasi Bank Non-DU yang Aktif dari Data Periode Terpilih
+# Ekstrak preferensi label klasifikasi teks dari Excel asal
+l_status = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'RAW_STATUS'})
+b_status = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'RAW_STATUS'})
+raw_status_map = pd.concat([l_status, b_status]).dropna().drop_duplicates()
+raw_status_map['RAW_STATUS'] = raw_status_map['RAW_STATUS'].astype(str).str.upper().str.strip()
+base_status_dict = raw_status_map.set_index('ID')['RAW_STATUS'].to_dict()
+
+# Mendaftar seluruh entitas aktif khusus di kuartal terpilih
 all_active_data_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
-active_non_du_banks = [str(bank) for bank in all_active_data_banks if str(bank) not in DAFTAR_DU_RESMI]
+all_active_data_banks = [str(bank).strip() for bank in all_active_data_banks]
 
-# C. Hitung Populasi Total Secara Presisi
-total_du_banks = len(DAFTAR_DU_RESMI)
-non_du_count = len(active_non_du_banks)
-total_banks_in_period = total_du_banks + non_du_count
-
-# D. Buat Kamus Status Mutlak (Source of Truth)
 status_dict = {}
-for bank in DAFTAR_DU_RESMI:
-    status_dict[bank] = 'DU'
-for bank in active_non_du_banks:
-    status_dict[bank] = 'NON DU'
+for bank in all_active_data_banks:
+    if bank in DAFTAR_DU_RESMI:
+        status_dict[bank] = 'DU'
+    else:
+        raw_st = base_status_dict.get(bank, 'NON DU')
+        if any(keyword in raw_st for keyword in ['NON BANK', 'NON-BANK', 'BKN BANK', 'LEMBAGA NON', 'NB']):
+            status_dict[bank] = 'NON BANK'
+        else:
+            status_dict[bank] = 'NON DU'
 
-# E. Penyatuan Hubungan Dua Arah (Lender <-> Borrower)
+# Hitung komposisi riil komponen donut chart kuartalan
+active_du_count = sum(1 for b in all_active_data_banks if status_dict[b] == 'DU')
+active_non_du_count = sum(1 for b in all_active_data_banks if status_dict[b] == 'NON DU')
+active_non_bank_count = sum(1 for b in all_active_data_banks if status_dict[b] == 'NON BANK')
+total_active_banks = len(all_active_data_banks)
+
+# Konsolidasi Hubungan Dua Arah Jaringan Jual-Beli
 rels = pd.concat([
     df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
     df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
@@ -245,32 +259,26 @@ rels['Counterparty'] = rels['Counterparty'].astype(str)
 rels['Bank_Status'] = rels['Bank'].map(status_dict)
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
-# F. Filter Hanya untuk Aktor Utama yang Masuk List DU Resmi
+# Uji Kepatuhan Evaluasi bagi Seluruh Universe Master DU
 du_rels = rels[rels['Bank'].isin(DAFTAR_DU_RESMI)]
-
-# G. Hitung Jumlah Unik Lawan Transaksi Berdasarkan Klasifikasi Status
 counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
 if 'DU' not in counts.columns: counts['DU'] = 0
 if 'NON DU' not in counts.columns: counts['NON DU'] = 0
 
-# H. Injeksi Seluruh Bank DU Resmi Ke Matrix Evaluasi (Termasuk yang Pasif)
 compliance_check = pd.DataFrame(index=DAFTAR_DU_RESMI)
 compliance_check = compliance_check.join(counts).fillna(0)
-
-# I. Uji Parameter Kepatuhan: Wajib memiliki minimal 5 DU DAN 5 Non-DU
 compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
 
-# J. Rekapitulasi Metrik Utama KPI Dashboard
+# Metrik Atas Ringkasan Eksekutif
 lender_patuh_count = compliance_check['Patuh'].sum()
-jumlah_bermasalah = total_du_banks - lender_patuh_count
-avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
-
-# Hitung Total Volume Transaksi (Triliun Rp)
+total_universe_du = len(DAFTAR_DU_RESMI)
+jumlah_bermasalah = total_universe_du - lender_patuh_count
+avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
 # ==========================================
-# 8. KPI CARDS + DYNAMIC DONUT CHART
+# 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS (3 ENTITAS)
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
@@ -279,13 +287,13 @@ VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; mar
 
 with col_donut:
     with st.container():
-        st.markdown(LABEL_HTML.format("Komposisi Bank"), unsafe_allow_html=True)
+        st.markdown(LABEL_HTML.format("Komposisi Aktivitas Pasar"), unsafe_allow_html=True)
         
-        donut_labels = ['DU', 'Non-DU', '']
-        donut_values = [total_du_banks, non_du_count, total_banks_in_period] 
-        donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
-        line_colors = ['#ffffff', '#ffffff', 'rgba(0,0,0,0)']
-        line_widths = [2, 2, 0]
+        donut_labels = ['DU', 'Non-DU', 'Non-Bank', '']
+        donut_values = [active_du_count, active_non_du_count, active_non_bank_count, total_active_banks] 
+        donut_colors = ['#1e3a5f', '#0ea5e9', '#f59e0b', 'rgba(0,0,0,0)']
+        line_colors = ['#ffffff', '#ffffff', '#ffffff', 'rgba(0,0,0,0)']
+        line_widths = [2, 2, 2, 0]
 
         fig_donut = go.Figure(data=[go.Pie(
             labels=donut_labels, values=donut_values, hole=0.75,
@@ -299,7 +307,7 @@ with col_donut:
             margin=dict(t=0, b=0, l=0, r=60), height=80, 
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             annotations=[dict(
-                text=f"<span style='font-size:22px; font-weight:800; color:#0f172a;'>{total_banks_in_period}</span><br><span style='font-size:11px; font-weight:600; color:#64748b;'>Bank</span>", 
+                text=f"<span style='font-size:20px; font-weight:800; color:#0f172a;'>{total_active_banks}</span><br><span style='font-size:10px; font-weight:600; color:#64748b;'>Entitas</span>", 
                 x=0.5, y=0.15, showarrow=False
             )]
         )
@@ -321,7 +329,7 @@ with c3:
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
 # ==========================================
-# 9. CHARTS
+# 9. PAPAN PERINGKAT (LEADERBOARD FILTERED FOR DU ONLY)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -332,7 +340,10 @@ CHART_BASE = dict(
     xaxis_visible=False, yaxis_title=None,
 )
 
+# Leaderboard 1: Volume Terbesar (Khusus DU)
 df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
+df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
+df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)] # Filter khusus DU
 df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
 df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
@@ -341,7 +352,7 @@ with col_chart1:
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
-            Bank dengan Volume Transaksi Terbesar (Triliun Rp)
+            Dealer Utama Volume Transaksi Terbesar (Triliun Rp)
         </div>
         """, unsafe_allow_html=True)
         
@@ -357,10 +368,13 @@ with col_chart1:
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
 
+# Leaderboard 2: Inklusivitas / Risk-Taking (Khusus DU)
 lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
 small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
-df_inklusif = df[df['SANDI CASH BORROWER (Maskedbrowser)' if False else 'SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
+df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
 df_inklusif.columns = ['LENDER', 'Score']
+df_inklusif['LENDER'] = df_inklusif['LENDER'].astype(str).str.strip()
+df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)] # Filter khusus DU
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
@@ -368,7 +382,7 @@ with col_chart2:
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
-            Apresiasi Inklusivitas Transaksi (Risk-Taking)
+            Apresiasi Inklusivitas Transaksi Dealer Utama
         </div>
         """, unsafe_allow_html=True)
         
@@ -386,7 +400,7 @@ with col_chart2:
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
-# 10. NETWORK GRAPH
+# 10. PETA JARINGAN EKOSISTEM (3 TIPE WARNA NODES)
 # ==========================================
 st.write("")
 with st.container(border=True):
@@ -399,7 +413,7 @@ with st.container(border=True):
             Peta Jaringan Transaksi Ekosistem Repo
         </div>
         """, unsafe_allow_html=True)
-        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Non DU</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #0f172a; font-size: 13px; font-weight: 500; margin-bottom: 15px;'>Biru Tua = DU &nbsp;&nbsp;|&nbsp;&nbsp; Biru Muda = Bank Non DU &nbsp;&nbsp;|&nbsp;&nbsp; Jingga = Lembaga Non-Bank</div>", unsafe_allow_html=True)
 
     required_cols = ['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']
     missing_cols = [col for col in required_cols if col not in df.columns]
@@ -453,6 +467,9 @@ with st.container(border=True):
                 if status == 'DU':
                     node_color.append('#1e3a5f') 
                     node_size.append(26 if str(node) == selected_bank else 14)
+                elif status == 'NON BANK':
+                    node_color.append('#f59e0b') 
+                    node_size.append(26 if str(node) == selected_bank else 12)
                 else:
                     node_color.append('#0ea5e9') 
                     node_size.append(26 if str(node) == selected_bank else 12) 

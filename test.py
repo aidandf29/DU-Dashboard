@@ -135,14 +135,22 @@ def load_excel_data_quarterly():
             df.columns = df.columns.str.strip()
             
             if 'SANDI CASH LENDER (Masked)' in df.columns:
-                df['SANDI CASH LENDER (Masked)'] = df['SANDI CASH LENDER (Masked)'].astype(str)
+                df['SANDI CASH LENDER (Masked)'] = df['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
             if 'SANDI CASH BORROWER (Masked)' in df.columns:
-                df['SANDI CASH BORROWER (Masked)'] = df['SANDI CASH BORROWER (Masked)'].astype(str)
-                
-            if 'STATUS PD CASH BORROWER' in df.columns:
-                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].astype(str).str.upper().str.strip()
-                df['STATUS PD CASH BORROWER'] = df['STATUS PD CASH BORROWER'].replace('NON-DU', 'NON DU')
-                
+                df['SANDI CASH BORROWER (Masked)'] = df['SANDI CASH BORROWER (Masked)'].astype(str).str.strip()
+
+            # --- FIX: normalisasi status DILAKUKAN DI SINI, untuk KEDUA kolom status,
+            # bukan cuma kolom borrower seperti versi sebelumnya. Ini penting karena
+            # status_dict nantinya digabung dari kedua kolom ini, jadi kalau salah satu
+            # belum dinormalisasi (misal lender masih ada 'Non-DU' / 'non du' / spasi liar),
+            # bank yang sama bisa kebaca 2 status berbeda tergantung dia jadi lender atau borrower.
+            for status_col in ['STATUS DU CASH LENDER', 'STATUS PD CASH BORROWER']:
+                if status_col in df.columns:
+                    df[status_col] = (
+                        df[status_col].astype(str).str.upper().str.strip()
+                        .replace({'NON-DU': 'NON DU', 'NAN': np.nan, 'NONE': np.nan, '': np.nan})
+                    )
+
             if 'TANGGAL TRANSAKSI' in df.columns:
                 df['TANGGAL TRANSAKSI'] = pd.to_datetime(df['TANGGAL TRANSAKSI'], errors='coerce')
                 
@@ -161,12 +169,14 @@ def load_excel_data_quarterly():
                     # Ambil tahun unik dari data tersebut
                     tahun = int(sub_df['TAHUN TRANSAKSI'].iloc[0])
                     
-                    # Bikin nama key baru
+                    # --- FIX: kunci kuartal TIDAK lagi dipecah jadi "(Pra DU)" / "(Pasca DU)".
+                    # Sebelumnya, jika sheet "Pra DU" dan "Pasca DU" punya transaksi di bulan/tahun
+                    # yang sama (transisi status terjadi di tengah kuartal), datanya akan TERPISAH
+                    # jadi 2 entri periode berbeda di dropdown. Akibatnya saat evaluasi kepatuhan
+                    # untuk 1 kuartal, sebagian transaksi bank tsb "hilang" karena nyangkut di
+                    # periode sebelah. Sekarang semua sub_df pada kuartal yang sama digabung jadi
+                    # SATU key, apa pun nama sheet asalnya.
                     nama_key = f"{tahun} {q_name}"
-                    if "Pra DU" in sheet_name:
-                        nama_key += " (Pra DU)"
-                    elif "Pasca DU" in sheet_name:
-                        nama_key += " (Pasca DU)"
                     
                     # Gabungkan jika kuncinya sudah ada
                     if nama_key in quarter_dict:
@@ -221,68 +231,95 @@ with col_hero:
 st.write("")
 
 # ==========================================
-# 7. PERHITUNGAN KPI UMUM (REVISED & CLEAN ALGORITHM)
+# 7. PERHITUNGAN KPI UMUM (LOGIKA COMPLIANCE — DIPERBAIKI)
 # ==========================================
 
-# A. Membuat Master Status yang 100% Bersih (Hanya Berpatokan pada Kolom Lender resmi)
-df_lender_status = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].dropna().drop_duplicates()
-df_lender_status['STATUS DU CASH LENDER'] = df_lender_status['STATUS DU CASH LENDER'].astype(str).str.upper().str.strip()
+# --- FIX UTAMA #1: status_dict dibangun dengan aturan "DU menang" (sama seperti
+# logika bank_status_dict yang sudah Anda pakai di bagian Network Graph), bukan
+# set_index().to_dict() yang asal timpa baris terakhir. Kalau satu bank pernah
+# tercatat DU di transaksi manapun pada periode ini (baik sebagai lender maupun
+# borrower), dia dianggap DU sepanjang periode itu. Ini mencegah bank DU asli
+# ke-downgrade jadi "NON DU" gara-gara satu baris data yang belum sempat ke-update
+# statusnya, atau urutan baris yang kebetulan menaruh status lama di akhir.
+lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(
+    columns={'SANDI CASH LENDER (Masked)': 'ID', 'STATUS DU CASH LENDER': 'STATUS'})
+borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(
+    columns={'SANDI CASH BORROWER (Masked)': 'ID', 'STATUS PD CASH BORROWER': 'STATUS'})
+status_map_all = pd.concat([lender_map, borrower_map]).dropna(subset=['STATUS'])
+status_dict = status_map_all.groupby('ID')['STATUS'].apply(
+    lambda x: 'DU' if 'DU' in x.values else 'NON DU'
+).to_dict()
 
-# Ambil list Bank yang terverifikasi resmi sebagai DU di periode ini
-du_list = df_lender_status[df_lender_status['STATUS DU CASH LENDER'] == 'DU']['SANDI CASH LENDER (Masked)'].unique().tolist()
-du_list_str = [str(b) for b in du_list]
-
-# Buat kamus status untuk semua bank yang aktif bertransaksi
-all_active_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
-status_dict = {str(bank): ('DU' if str(bank) in du_list_str else 'NON DU') for bank in all_active_banks}
-
-# B. Hitung Populasi Bank Secara Dinamis Berdasarkan Data Real Periode Terpilih
-total_du_banks = len(du_list)
-total_banks_in_period = len(all_active_banks)
-non_du_count = total_banks_in_period - total_du_banks
-
-# C. Gabungkan Hubungan Dua Arah Tanpa Memandang Posisi Lender/Borrower
+# B. Gabungkan semua hubungan (Lender->Borrower dan Borrower->Lender)
 rels = pd.concat([
-    df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
-    df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
-]).dropna().drop_duplicates()
+    df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].rename(
+        columns={'SANDI CASH LENDER (Masked)': 'Bank', 'SANDI CASH BORROWER (Masked)': 'Counterparty'}),
+    df[['SANDI CASH BORROWER (Masked)', 'SANDI CASH LENDER (Masked)']].rename(
+        columns={'SANDI CASH BORROWER (Masked)': 'Bank', 'SANDI CASH LENDER (Masked)': 'Counterparty'})
+]).drop_duplicates()
 
-# Pastikan tipe data string agar proses mapping akurat
-rels['Bank'] = rels['Bank'].astype(str)
-rels['Counterparty'] = rels['Counterparty'].astype(str)
-
-# Petakan status menggunakan kamus yang telah dibersihkan
-rels['Bank_Status'] = rels['Bank'].map(status_dict)
+# C. Tambahkan status pada relasi (sekarang pakai status_dict yang sudah "DU menang")
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
+rels['Bank_Status'] = rels['Bank'].map(status_dict)
 
-# D. Filter Hubungan Transaksi Khusus untuk Aktor Utama yang Berstatus DU Resmi
-du_rels = rels[rels['Bank'].isin(du_list_str)]
+# --- FIX #2: buang baris yang Counterparty_Status-nya tidak ketemu di status_dict
+# (misal typo kode bank / data kosong). Sebelumnya baris dengan Counterparty_Status
+# = NaN tetap masuk groupby tapi otomatis diabaikan oleh pandas tanpa pemberitahuan,
+# sehingga transaksi itu "hilang" begitu saja dari hitungan DU/NON DU. Di sini kita
+# eksplisit drop + bisa di-surface ke user kalau jumlahnya signifikan.
+rels_unmatched = rels[rels['Counterparty_Status'].isna() | rels['Bank_Status'].isna()]
+rels = rels.dropna(subset=['Counterparty_Status', 'Bank_Status'])
 
-# E. Hitung Jumlah Unik Counterparty (Lawan Transaksi) Per Bank DU
-counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
+# D. Filter hanya untuk Bank yang berstatus 'DU'
+du_rels = rels[rels['Bank_Status'] == 'DU']
 
-# Pastikan kolom DU dan NON DU tersedia di dataframe hasil pengelompokan
-if 'DU' not in counts.columns: counts['DU'] = 0
-if 'NON DU' not in counts.columns: counts['NON DU'] = 0
+# E. Hitung jumlah unik counterparty per Bank DU
+compliance_check = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
-# F. Masukkan Semua Daftar DU Resmi ke Tabel Evaluasi (Termasuk yang Pasif/0 Transaksi)
-compliance_check = pd.DataFrame(index=du_list_str)
-compliance_check = compliance_check.join(counts).fillna(0)
+# F. Pastikan kolom DU dan NON DU ada
+if 'DU' not in compliance_check.columns: compliance_check['DU'] = 0
+if 'NON DU' not in compliance_check.columns: compliance_check['NON DU'] = 0
 
-# G. Tentukan Kepatuhan: Wajib memiliki minimal 5 lawan DU DAN 5 lawan Non-DU
+# --- FIX #3: pastikan SEMUA bank yang berstatus DU pada periode ini ikut dievaluasi,
+# bukan cuma bank DU yang kebetulan punya baris transaksi di du_rels. Kalau ada bank
+# DU resmi yang sama sekali tidak bertransaksi (0 lawan transaksi) di kuartal ini,
+# dia harus tetap muncul di tabel dengan DU=0, NON DU=0 (otomatis tidak patuh),
+# bukan hilang sama sekali dari total_du_banks. Ini juga yang membuat total_du_banks
+# akhirnya match dengan jumlah DU resmi (18 / 20 / 21, dst).
+all_du_banks_in_period = [bank for bank, status in status_dict.items() if status == 'DU']
+compliance_check = compliance_check.reindex(all_du_banks_in_period, fill_value=0)
+
+# G. Definisi Patuh: Minimal 5 DU dan 5 Non DU
 compliance_check['Patuh'] = (compliance_check['DU'] >= 5) & (compliance_check['NON DU'] >= 5)
 
-# H. Rekapitulasi Akhir Nilai KPI Dashboard
+# H. Update KPI
+total_du_banks = len(compliance_check)
 lender_patuh_count = compliance_check['Patuh'].sum()
-jumlah_bermasalah = total_du_banks - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_du_banks) * 100 if total_du_banks > 0 else 0
+jumlah_bermasalah = total_du_banks - lender_patuh_count
 
-# Hitung Total Volume Transaksi (Dalam Triliun Rp)
+# Update Total Volume
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
+# ==========================================
+# 7b. PANEL DEBUG (opsional, hapus kalau sudah yakin angkanya benar)
+# ==========================================
+with st.expander("🔍 Debug Kepatuhan DU (cek manual di sini)", expanded=False):
+    st.write(f"Jumlah bank berstatus DU pada periode ini: **{total_du_banks}**")
+    if not rels_unmatched.empty:
+        st.warning(
+            f"Ditemukan {len(rels_unmatched)} baris relasi dengan kode bank yang tidak "
+            f"dikenali / status kosong (kemungkinan typo kode bank atau data status hilang). "
+            f"Transaksi ini DIABAIKAN dari perhitungan kepatuhan."
+        )
+        st.dataframe(rels_unmatched.head(20))
+    st.dataframe(
+        compliance_check.sort_values('Patuh').style.format({'DU': '{:.0f}', 'NON DU': '{:.0f}'})
+    )
+    st.caption("Cek bank yang ingin Anda verifikasi manual di tabel di atas: lihat kolom DU dan NON DU per bank.")
 
 # ==========================================
-# 8. KPI CARDS + HALF DOUGHNUT CHART (DYNAMIC)
+# 8. KPI CARDS + HALF DOUGHNUT CHART (STATIS)
 # ==========================================
 col_donut, c1, c2, c3 = st.columns(4)
 
@@ -293,13 +330,21 @@ with col_donut:
     with st.container():
         st.markdown(LABEL_HTML.format("Komposisi Bank"), unsafe_allow_html=True)
         
-        # Menggunakan variabel dinamis hasil kalkulasi algoritma baru
-        total_banks = total_banks_in_period
-        du_cnt = total_du_banks
-        non_du_cnt = non_du_count
+        # --- FIX #4: du_count sekarang dihitung dari status_dict aktual periode ini
+        # (total_du_banks), bukan angka hardcoded 21 yang ditulis manual di kode.
+        # Angka hardcoded sebelumnya TIDAK AKAN BERUBAH walau Anda ganti periode di
+        # dropdown (17 Mei 2024 / 1 Nov 2024 / 2 Jan 2026 semua akan tetap nampilin 21),
+        # jadi donat ini sebenarnya selalu salah untuk periode selain yang terakhir
+        # kali nilainya di-hardcode.
+        total_banks_all = pd.concat([
+            df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']
+        ]).dropna().unique()
+        du_count = total_du_banks
+        non_du_count = max(len(total_banks_all) - du_count, 0)
+        total_banks = du_count + non_du_count
         
         donut_labels = ['DU', 'Non-DU', '']
-        donut_values = [du_cnt, non_du_cnt, total_banks] 
+        donut_values = [du_count, non_du_count, total_banks] 
         donut_colors = ['#1e3a5f', '#0ea5e9', 'rgba(0,0,0,0)']
         line_colors = ['#ffffff', '#ffffff', 'rgba(0,0,0,0)']
         line_widths = [2, 2, 0]
@@ -435,11 +480,12 @@ with st.container(border=True):
                 label_visibility="collapsed"
             )
         
-        lender_map = df[['SANDI CASH LENDER (Masked)', 'STATUS DU CASH LENDER']].rename(columns={'SANDI CASH LENDER (Masked)': 'ID_BANK', 'STATUS DU CASH LENDER': 'STATUS'})
-        borrower_map = df[['SANDI CASH BORROWER (Masked)', 'STATUS PD CASH BORROWER']].rename(columns={'SANDI CASH BORROWER (Masked)': 'ID_BANK', 'STATUS PD CASH BORROWER': 'STATUS'})
-        all_mapping_status = pd.concat([lender_map, borrower_map]).dropna()
-        all_mapping_status['STATUS'] = all_mapping_status['STATUS'].astype(str).str.upper().str.strip().replace('NON-DU', 'NON DU')
-        bank_status_dict = all_mapping_status.groupby('ID_BANK')['STATUS'].apply(lambda x: 'DU' if 'DU' in x.values else 'NON DU').to_dict()
+        # --- FIX #5: pakai status_dict yang sudah dihitung ulang di section 7
+        # (konsisten "DU menang"), bukan bikin mapping terpisah lagi di sini.
+        # Sebelumnya ada DUA cara hitung status bank yang berbeda di file yang sama
+        # (satu di KPI section pakai overwrite, satu di sini pakai "DU menang") —
+        # itu sendiri sumber inkonsistensi antara angka KPI dan visualisasi network graph.
+        bank_status_dict = status_dict
 
         df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
         

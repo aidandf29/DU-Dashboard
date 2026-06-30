@@ -48,13 +48,9 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* BACKGROUND UTAMA APLIKASI - SEDIKIT TEKSTUR AGAR EFEK GLASS DI LEADERBOARD TERLIHAT */
+/* BACKGROUND UTAMA APLIKASI ABU-ABU TERANG BERSIH */
 .stApp { 
-    background-color: #f1f5f9 !important;
-    background-image: 
-        radial-gradient(circle at 15% 20%, rgba(191, 219, 254, 0.35) 0%, transparent 35%),
-        radial-gradient(circle at 85% 75%, rgba(219, 234, 254, 0.30) 0%, transparent 40%) !important;
-    background-attachment: fixed !important;
+    background-color: #f1f5f9 !important; 
 }
 
 /* KARTU METRIC ATAS (SOLID PUTIH) */

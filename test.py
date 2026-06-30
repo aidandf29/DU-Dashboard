@@ -74,29 +74,25 @@ footer { display: none !important; }
 }
 
 /* ============================================
-   GLASS EFFECT - LEADERBOARD CARDS
-   Header dibungkus div custom, sementara chart Plotly
-   diberi warna latar gradient YANG SAMA langsung lewat
-   paper_bgcolor (di kode Python), sehingga keduanya
-   menyatu visual tanpa CSS rumit / :has() yang rapuh.
+   GLASS EFFECT - HERO CARD (Dashboard Pemantauan Dealer Utama)
+   Kotak judul + baris KPI di bawahnya, warna solid biru muda
+   (bukan transparan) supaya konsisten dan stabil.
    ============================================ */
-.glass-card-header {
+.glass-hero {
     background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
     border: 1px solid rgba(191, 219, 254, 0.8);
-    border-bottom: none;
     border-top: 4px solid #0ea5e9;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -8px 24px -8px rgba(37, 99, 235, 0.15);
-    padding: 20px 20px 12px 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.20);
+    padding: 20px 24px;
 }
-.glass-card-footer {
+.glass-kpi-card {
     background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
     border: 1px solid rgba(191, 219, 254, 0.8);
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 16px 32px -8px rgba(37, 99, 235, 0.20);
-    height: 14px;
-    margin-top: -14px;
+    border-top: 4px solid #0ea5e9;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.20);
+    padding: 16px 18px;
 }
 
 /* CUSTOM NAVBAR */
@@ -237,7 +233,7 @@ else:
 
 with col_hero:
     st.markdown(f"""
-    <div style="font-family: 'Inter', sans-serif;">
+    <div class="glass-hero" style="font-family: 'Inter', sans-serif;">
         <div style="margin-bottom: 5px; font-size: 28px; font-weight: 800; color: #0f172a;">Dashboard Pemantauan Dealer Utama</div>
         <p style="font-size: 13px; color: #475569; font-weight: 500; margin-top: 0;">{periode_teks}</p>
     </div>
@@ -320,6 +316,7 @@ VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; mar
 
 with col_donut:
     with st.container():
+        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Komposisi Aktivitas Pasar"), unsafe_allow_html=True)
         
         donut_labels = ['DU', 'Non-DU', 'Non-Bank', '']
@@ -345,21 +342,28 @@ with col_donut:
             )]
         )
         st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
 
 with c1:
     with st.container():
+        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Total Volume DU (Repo)"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"Rp {total_volume_t:.2f} T"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 with c2:
     with st.container():
+        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Rata-rata Kepatuhan"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{avg_kepatuhan:.1f}%"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 with c3:
     with st.container():
+        st.markdown('<div class="glass-kpi-card">', unsafe_allow_html=True)
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # 9. PAPAN PERINGKAT (DENGAN PENANDA JS TARGET)
@@ -380,19 +384,16 @@ df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
 df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
 
 with col_chart1:
-    with st.container():
+    with st.container(border=True):
         st.markdown(f"""
-        <div class="glass-card-header">
-            <div style='color: #0f172a; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;'>
-                <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
-                Dealer Utama Volume Transaksi Terbesar (Triliun Rp)
-            </div>
+        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
+            <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
+            Dealer Utama Volume Transaksi Terbesar (Triliun Rp)
         </div>
         """, unsafe_allow_html=True)
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         fig1.update_layout(**CHART_BASE)
-        fig1.update_layout(paper_bgcolor="#e8f1fd", plot_bgcolor="#e8f1fd")
         
         max_vol = df_vol['NOMINAL (TRILIUN)'].max() if not df_vol.empty else 1
         fig1.update_xaxes(range=[0, max_vol * 1.25])
@@ -402,8 +403,6 @@ with col_chart1:
         fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
-        
-        st.markdown('<div class="glass-card-footer"></div>', unsafe_allow_html=True)
 
 lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
 small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
@@ -414,19 +413,16 @@ df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
 df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
 with col_chart2:
-    with st.container():
+    with st.container(border=True):
         st.markdown(f"""
-        <div class="glass-card-header">
-            <div style='color: #0f172a; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;'>
-                <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
-                Apresiasi Inklusivitas Transaksi Dealer Utama
-            </div>
+        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
+            <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
+            Apresiasi Inklusivitas Transaksi Dealer Utama
         </div>
         """, unsafe_allow_html=True)
         
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         fig2.update_layout(**CHART_BASE)
-        fig2.update_layout(paper_bgcolor="#e8f1fd", plot_bgcolor="#e8f1fd")
         
         max_score = df_inklusif['Score'].max() if not df_inklusif.empty else 1
         if pd.isna(max_score): max_score = 1
@@ -437,10 +433,6 @@ with col_chart2:
         fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
-        
-        st.markdown('<div class="glass-card-footer"></div>', unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # 10. PETA JARINGAN EKOSISTEM (TETAP PUTIH NORMAL)

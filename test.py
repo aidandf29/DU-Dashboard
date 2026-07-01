@@ -111,15 +111,16 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {{
 .nav-profile-name {{ font-size: 13px; font-weight: 700; color: #0f172a; }}
 .nav-profile-role {{ font-size: 11px; color: #475569; font-weight: 500; }}
 
-/* SETTING BENTUK TOMBOL KOTAK KECIL */
+/* SETTING BENTUK TOMBOL KOTAK KECIL - DIUBAH JADI TRANSPARAN (FIX BG PUTIH) */
 div[data-testid="stButton"] > button {{
     padding: 0px !important;
     height: 32px !important;
     width: 32px !important;
     min-height: 0px !important;
     border-radius: 8px !important;
-    border: 1px solid #cbd5e1 !important;
-    background-color: #ffffff !important;
+    border: none !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
     margin-top: -3px !important;
     overflow: hidden !important;
 }}
@@ -130,8 +131,8 @@ div[data-testid="stButton"] > button p {{
 }}
 
 div[data-testid="stButton"] > button:hover {{
-    background-color: #f1f5f9 !important;
-    border-color: #881337 !important;
+    background-color: rgba(15, 23, 42, 0.06) !important;
+    border-color: transparent !important;
 }}
 
 /* ---------------------------------------------------------------------- */

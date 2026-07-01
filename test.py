@@ -331,7 +331,6 @@ with c3:
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
 
-# Hilangkan setting height statis (300) dari CHART_BASE, kita buat dinamis per-grafik
 CHART_BASE = dict(
     margin=dict(l=60, r=20, t=10, b=10),
     plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
@@ -340,7 +339,6 @@ CHART_BASE = dict(
 
 # ---- KIRI: LEADERBOARD VOLUME ----
 with col_chart1:
-    # Set height=450 pada container agar muncul scrollbar jika grafik memanjang
     with st.container(height=450, border=True): 
         st.markdown(f"""
         <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
@@ -349,21 +347,19 @@ with col_chart1:
         </div>
         """, unsafe_allow_html=True)
         
-        # Tombol Sort
-        sort_vol = st.radio( ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_vol")
+        # Ditambahkan parameter label_visibility="collapsed" agar label tersembunyi
+        sort_vol = st.radio("Urutkan", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_vol", label_visibility="collapsed")
         
         df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
         df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
         df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
         df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
         
-        # Jika ingin tertinggi di atas pada Plotly, dataframe harus diurutkan Ascending (Terkecil ke Terbesar)
         is_asc = True if sort_vol == "Tertinggi di atas" else False
         df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=is_asc)
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         
-        # Tinggi chart dinamis mengikuti jumlah row bank, agar bar tidak menumpuk/gepeng
         dynamic_height_1 = max(300, len(df_vol) * 35)
         fig1.update_layout(**CHART_BASE, height=dynamic_height_1)
         
@@ -371,7 +367,7 @@ with col_chart1:
         fig1.update_xaxes(range=[0, max_vol * 1.25])
         
         colors1 = ['#bfdbfe'] * max(0, len(df_vol)-1) + ['#1e3a5f'] if len(df_vol) > 0 else ['#1e3a5f']
-        if not is_asc: colors1.reverse() # Balik warna highlight jika disortir terbalik
+        if not is_asc: colors1.reverse() 
         
         fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
@@ -388,8 +384,8 @@ with col_chart2:
         </div>
         """, unsafe_allow_html=True)
         
-        # Tombol Sort
-        sort_ink = st.radio("Urutkan Skor:", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_ink")
+        # Ditambahkan parameter label_visibility="collapsed" agar label tersembunyi
+        sort_ink = st.radio("Urutkan", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_ink", label_visibility="collapsed")
         
         lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
         small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
@@ -398,13 +394,11 @@ with col_chart2:
         df_inklusif['LENDER'] = df_inklusif['LENDER'].astype(str).str.strip()
         df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
         
-        # Hilangkan tail(7) agar semua data masuk. Sort dinamis.
         is_asc_ink = True if sort_ink == "Tertinggi di atas" else False
         df_inklusif = df_inklusif.sort_values('Score', ascending=is_asc_ink)
         
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         
-        # Tinggi chart dinamis mengikuti jumlah row bank
         dynamic_height_2 = max(300, len(df_inklusif) * 35)
         fig2.update_layout(**CHART_BASE, height=dynamic_height_2)
         
@@ -413,7 +407,7 @@ with col_chart2:
         fig2.update_xaxes(range=[0, max_score * 1.25])
         
         colors2 = ['#bfdbfe'] * max(0, len(df_inklusif)-1) + ['#1e3a5f'] if len(df_inklusif) > 0 else ['#1e3a5f']
-        if not is_asc_ink: colors2.reverse() # Balik warna highlight jika disortir terbalik
+        if not is_asc_ink: colors2.reverse() 
         
         fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 

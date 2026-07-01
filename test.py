@@ -15,6 +15,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# [UPDATED] Inisialisasi State Arah Urutan dipindah ke atas agar terbaca oleh CSS Dinamis
+if "sort_vol_dir" not in st.session_state: st.session_state.sort_vol_dir = "desc"
+if "sort_ink_dir" not in st.session_state: st.session_state.sort_ink_dir = "desc"
+
 # ==========================================
 # 2. KONFIGURASI ICON CUSTOM 
 # ==========================================
@@ -29,8 +33,17 @@ ICON_VOLUME_SIZE = 22
 ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
+# [UPDATED] Base64 SVG yang kamu berikan
+ARROW_BOTTOM = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPgoJPHBhdGggZD0iTTAgMGgxNXYxNUgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0iTTcuNSAxMkwwIDRoMTV6IiAvPgo8L3N2Zz4K"
+ARROW_UP = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPgoJPHBhdGggZD0iTTAgMGgxNXYxNUgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0ibTcuNSAzbDcuNSA4SDB6IiAvPgo8L3N2Zz4K"
+
+# Logika penentuan icon berdasarkan state saat ini
+vol_arrow = ARROW_BOTTOM if st.session_state.sort_vol_dir == "desc" else ARROW_UP
+ink_arrow = ARROW_BOTTOM if st.session_state.sort_ink_dir == "desc" else ARROW_UP
+
+
 # ==========================================
-# 3. CSS CUSTOM - MAROON GLASS & ICONIFY TOGGLE
+# 3. CSS CUSTOM - MAROON GLASS & INJEKSI ICON
 # ==========================================
 st.markdown("""
 <style>
@@ -99,10 +112,7 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #475569; font-weight: 500; }
 
-
-/* ====================================================
-   CSS HACK: TOMBOL TOGGLE ICONIFY MINGCUTE 
-   ==================================================== */
+/* RESET DAN SETTING TOMBOL UTAMA */
 div[data-testid="stButton"] > button {
     padding: 0px !important;
     height: 32px !important;
@@ -111,10 +121,10 @@ div[data-testid="stButton"] > button {
     border-radius: 8px !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
-    margin-top: -3px !important; /* Menaikkan tombol agar sejajar dengan judul chart */
+    margin-top: -3px !important;
 }
 
-/* HILANGKAN TEKS MUTLAK AGAR TIDAK WRAPPING VERTICAL (PENYEBAB ERROR SEBELUMNYA) */
+/* HILANGKAN TEKS TOMBOL */
 div[data-testid="stButton"] > button p {
     font-size: 0px !important; 
     color: transparent !important;
@@ -125,24 +135,30 @@ div[data-testid="stButton"] > button:hover {
     background-color: #f1f5f9 !important;
     border-color: #881337 !important;
 }
-
-/* JIKA LABEL TOMBOL MENGANDUNG "DN_" MUNCULKAN MINGCUTE DOWN */
-div[data-testid="stButton"] > button:has(p:contains("DN_")) {
-    background-image: url('https://api.iconify.design/mingcute/down-fill.svg?color=%230f172a') !important;
-    background-size: 20px !important; 
-    background-position: center !important; 
-    background-repeat: no-repeat !important;
-}
-
-/* JIKA LABEL TOMBOL MENGANDUNG "UP_" MUNCULKAN MINGCUTE UP */
-div[data-testid="stButton"] > button:has(p:contains("UP_")) {
-    background-image: url('https://api.iconify.design/mingcute/up-fill.svg?color=%230f172a') !important;
-    background-size: 20px !important; 
-    background-position: center !important; 
-    background-repeat: no-repeat !important;
-}
 </style>
 """, unsafe_allow_html=True)
+
+# [UPDATED] Suntik Icon secara dinamis berdasarkan posisi kolom agar terhindar dari bug :contains()
+st.markdown(f"""
+<style>
+/* Tombol di Kolom Kiri (Leaderboard Volume) */
+div[data-testid="stColumns"] > div[data-testid="stColumn"]:nth-child(1) div[data-testid="stButton"] > button {{
+    background-image: url('{vol_arrow}') !important;
+    background-size: 16px !important; 
+    background-position: center !important; 
+    background-repeat: no-repeat !important;
+}}
+
+/* Tombol di Kolom Kanan (Leaderboard Inklusivitas) */
+div[data-testid="stColumns"] > div[data-testid="stColumn"]:nth-child(2) div[data-testid="stButton"] > button {{
+    background-image: url('{ink_arrow}') !important;
+    background-size: 16px !important; 
+    background-position: center !important; 
+    background-repeat: no-repeat !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
 
 # ==========================================
 # 4. HTML NAVBAR CUSTOM
@@ -365,7 +381,7 @@ with c3:
 
 
 # ==========================================
-# 9. PAPAN PERINGKAT (SISTEM TOGGLE 1 TOMBOL & MINGCUTE ICON)
+# 9. PAPAN PERINGKAT (SISTEM TOGGLE 1 TOMBOL)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -375,11 +391,6 @@ CHART_BASE = dict(
     plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
     xaxis_visible=False, yaxis_title=None,
 )
-
-# Inisialisasi State Arah Urutan (Default: desc = Tertinggi di atas)
-if "sort_vol_dir" not in st.session_state: st.session_state.sort_vol_dir = "desc"
-if "sort_ink_dir" not in st.session_state: st.session_state.sort_ink_dir = "desc"
-
 
 # ---- KIRI: LEADERBOARD VOLUME ----
 with col_chart1:
@@ -414,7 +425,6 @@ with col_chart1:
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         
-        # Perkalian dinamis 45px per bar. Akan pas menampilkan 7 baris dalam 360px
         dynamic_height_1 = max(300, len(df_vol) * 45)
         fig1.update_layout(**CHART_BASE, height=dynamic_height_1)
         

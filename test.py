@@ -74,20 +74,14 @@ footer { display: none !important; }
 }
 
 /* TARGET MUTLAK ANTI-GAGAL: HANYA KOTAK DI DALAM STCOLUMN (LEADERBOARD) */
-/* Menggunakan multi-selector resmi Streamlit untuk menjamin kompatibilitas browser */
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
 div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
-    /* Perpaduan Transparansi Light Maroon Glass */
     background: linear-gradient(135deg, rgba(136, 19, 55, 0.15) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
     border-radius: 16px !important;
-    
-    /* Spesifikasi Border Tebal Warna Maroon Tegas */
     border: 3px solid #881337 !important; 
     border-top: 5px solid #4c0519 !important; 
-    
-    /* Spesifikasi Heavy Shadow Mendalam */
     box-shadow: 0 20px 25px -5px rgba(136, 19, 55, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15) !important;
 }
 
@@ -106,6 +100,9 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
 .nav-item.disabled { color: #64748b; cursor: not-allowed; } 
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #475569; font-weight: 500; }
+
+/* Menyesuaikan radio button agar terlihat lebih kecil & rapi di dashboard */
+div.row-widget.stRadio > div{ flex-direction:row; gap: 15px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,7 +137,6 @@ st.markdown(f"""
 def load_excel_data_quarterly():
     try:
         raw_url = st.secrets["DATA_LINK"]
-        
         if "/d/" in raw_url:
             file_id = raw_url.split("/d/")[1].split("/")[0]
             download_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
@@ -170,21 +166,15 @@ def load_excel_data_quarterly():
                 
             if 'BULAN TRANSAKSI' in df.columns and 'TAHUN TRANSAKSI' in df.columns:
                 for label_bulan, sub_df in df.groupby('BULAN TRANSAKSI'):
-                    if label_bulan in [1, 2, 3]:
-                        q_name = "Q1 (Jan-Mar)"
-                    elif label_bulan in [4, 5, 6]:
-                        q_name = "Q2 (Apr-Jun)"
-                    elif label_bulan in [7, 8, 9]:
-                        q_name = "Q3 (Jul-Sep)"
-                    else:
-                        q_name = "Q4 (Okt-Des)"
+                    if label_bulan in [1, 2, 3]: q_name = "Q1 (Jan-Mar)"
+                    elif label_bulan in [4, 5, 6]: q_name = "Q2 (Apr-Jun)"
+                    elif label_bulan in [7, 8, 9]: q_name = "Q3 (Jul-Sep)"
+                    else: q_name = "Q4 (Okt-Des)"
                     
                     tahun = int(sub_df['TAHUN TRANSAKSI'].iloc[0])
                     nama_key = f"{tahun} {q_name}"
-                    if "Pra DU" in sheet_name:
-                        nama_key += " (Pra DU)"
-                    elif "Pasca DU" in sheet_name:
-                        nama_key += " (Pasca DU)"
+                    if "Pra DU" in sheet_name: nama_key += " (Pra DU)"
+                    elif "Pasca DU" in sheet_name: nama_key += " (Pasca DU)"
                     
                     if nama_key in quarter_dict:
                         quarter_dict[nama_key] = pd.concat([quarter_dict[nama_key], sub_df]).drop_duplicates()
@@ -192,9 +182,7 @@ def load_excel_data_quarterly():
                         quarter_dict[nama_key] = sub_df
                         
         sorted_keys = sorted(quarter_dict.keys(), reverse=True)
-        sorted_quarter_dict = {k: quarter_dict[k] for k in sorted_keys}
-        
-        return sorted_quarter_dict
+        return {k: quarter_dict[k] for k in sorted_keys}
     except Exception as e:
         st.error(f"Gagal memuat Excel: {e}")
         return None
@@ -206,18 +194,14 @@ sheets_data = load_excel_data_quarterly()
 # ==========================================
 col_hero, col_filter = st.columns([3.5, 1.5])
 
-if sheets_data is not None:
-    daftar_periode = list(sheets_data.keys())
-else:
-    daftar_periode = ["2026 Q1 (Jan-Mar)", "2025 Q4 (Okt-Des)", "2025 Q3 (Jul-Sep)"] 
+if sheets_data is not None: daftar_periode = list(sheets_data.keys())
+else: daftar_periode = ["2026 Q1 (Jan-Mar)", "2025 Q4 (Okt-Des)", "2025 Q3 (Jul-Sep)"] 
 
 with col_filter:
     st.write("") 
     selected_period = st.selectbox("Periode Evaluasi", daftar_periode, label_visibility="collapsed")
 
-if sheets_data is None: 
-    st.stop()
-
+if sheets_data is None: st.stop()
 df = sheets_data[selected_period]
 
 if 'TANGGAL TRANSAKSI' in df.columns and not df['TANGGAL TRANSAKSI'].isnull().all():
@@ -273,7 +257,6 @@ rels = pd.concat([
 
 rels['Bank'] = rels['Bank'].astype(str)
 rels['Counterparty'] = rels['Counterparty'].astype(str)
-
 rels['Bank_Status'] = rels['Bank'].map(status_dict)
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
@@ -293,15 +276,6 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
-# Cetak log bank bermasalah ke terminal background
-bank_tidak_patuh_list = compliance_check[~compliance_check['Patuh']].index.tolist()
-print("\n" + "="*50)
-print(f"📡 LOG EVALUASI DASHBOARD - PERIODE: {selected_period}")
-print(f"Total Universe DU: {total_universe_du} Bank")
-print(f"Jumlah DU Tidak Patuh: {jumlah_bermasalah} Bank")
-print(f"Daftar Nomor Bank DU Yang Tidak Patuh: {bank_tidak_patuh_list}")
-print("="*50 + "\n")
-
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
 # ==========================================
@@ -313,23 +287,20 @@ VALUE_HTML = '<div style="color: #0f172a; font-size: 26px; font-weight: 800; mar
 with col_donut:
     with st.container():
         st.markdown(LABEL_HTML.format("Komposisi Aktivitas Pasar"), unsafe_allow_html=True)
-        
         donut_labels = ['DU', 'Non-DU', 'Non-Bank', '']
         donut_values = [active_du_count, active_non_du_count, active_non_bank_count, total_active_banks] 
         donut_colors = ['#1e3a5f', '#0ea5e9', '#f59e0b', 'rgba(0,0,0,0)']
         line_colors = ['#ffffff', '#ffffff', '#ffffff', 'rgba(0,0,0,0)']
-        line_widths = [2, 2, 2, 0]
-
+        
         fig_donut = go.Figure(data=[go.Pie(
             labels=donut_labels, values=donut_values, hole=0.75,
             rotation=270, direction='clockwise', sort=False,
-            marker=dict(colors=donut_colors, line=dict(color=line_colors, width=line_widths)),
+            marker=dict(colors=donut_colors, line=dict(color=line_colors, width=[2, 2, 2, 0])),
             textinfo='none', hoverinfo='label+value'
         )])
 
         fig_donut.update_layout(
-            showlegend=False,
-            margin=dict(t=0, b=0, l=0, r=60), height=80, 
+            showlegend=False, margin=dict(t=0, b=0, l=0, r=60), height=80, 
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             annotations=[dict(
                 text=f"<span style='font-size:20px; font-weight:800; color:#0f172a;'>{total_active_banks}</span><br><span style='font-size:10px; font-weight:600; color:#64748b;'>Entitas</span>", 
@@ -355,76 +326,102 @@ with c3:
 
 
 # ==========================================
-# 9. PAPAN PERINGKAT (LEADERBOARD MAROON GLASS)
+# 9. PAPAN PERINGKAT (SCROLLABLE & SORTABLE)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
 
+# Hilangkan setting height statis (300) dari CHART_BASE, kita buat dinamis per-grafik
 CHART_BASE = dict(
-    margin=dict(l=60, r=20, t=10, b=10), height=300,
+    margin=dict(l=60, r=20, t=10, b=10),
     plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
     xaxis_visible=False, yaxis_title=None,
 )
 
-df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
-df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
-df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
-df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
-df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True)
-
+# ---- KIRI: LEADERBOARD VOLUME ----
 with col_chart1:
-    with st.container(border=True): 
+    # Set height=450 pada container agar muncul scrollbar jika grafik memanjang
+    with st.container(height=450, border=True): 
         st.markdown(f"""
-        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
+        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
-            Dealer Utama Volume Transaksi Terbesar (Triliun Rp)
+            Volume Transaksi Terbesar (Triliun Rp)
         </div>
         """, unsafe_allow_html=True)
         
+        # Tombol Sort
+        sort_vol = st.radio("Urutkan Volume:", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_vol")
+        
+        df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
+        df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
+        df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
+        df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
+        
+        # Jika ingin tertinggi di atas pada Plotly, dataframe harus diurutkan Ascending (Terkecil ke Terbesar)
+        is_asc = True if sort_vol == "Tertinggi di atas" else False
+        df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=is_asc)
+        
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
-        fig1.update_layout(**CHART_BASE)
+        
+        # Tinggi chart dinamis mengikuti jumlah row bank, agar bar tidak menumpuk/gepeng
+        dynamic_height_1 = max(300, len(df_vol) * 35)
+        fig1.update_layout(**CHART_BASE, height=dynamic_height_1)
         
         max_vol = df_vol['NOMINAL (TRILIUN)'].max() if not df_vol.empty else 1
         fig1.update_xaxes(range=[0, max_vol * 1.25])
         
-        colors1 = ['#bfdbfe'] * min(6, len(df_vol)-1) + ['#1e3a5f'] if len(df_vol) > 0 else ['#1e3a5f']
+        colors1 = ['#bfdbfe'] * max(0, len(df_vol)-1) + ['#1e3a5f'] if len(df_vol) > 0 else ['#1e3a5f']
+        if not is_asc: colors1.reverse() # Balik warna highlight jika disortir terbalik
         
         fig1.update_traces(marker_color=colors1, width=0.6, texttemplate='<b>%{x:,.1f} T</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig1.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
 
-lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
-small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
-df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
-df_inklusif.columns = ['LENDER', 'Score']
-df_inklusif['LENDER'] = df_inklusif['LENDER'].astype(str).str.strip()
-df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
-df_inklusif = df_inklusif.sort_values('Score', ascending=True).tail(7)
 
+# ---- KANAN: LEADERBOARD INKLUSIVITAS ----
 with col_chart2:
-    with st.container(border=True): 
+    with st.container(height=450, border=True): 
         st.markdown(f"""
-        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;'>
+        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
-            Apresiasi Inklusivitas Transaksi Dealer Utama
+            Apresiasi Inklusivitas Transaksi DU
         </div>
         """, unsafe_allow_html=True)
         
+        # Tombol Sort
+        sort_ink = st.radio("Urutkan Skor:", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_ink")
+        
+        lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
+        small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
+        df_inklusif = df[df['SANDI CASH BORROWER (Masked)'].isin(small_borrowers_real)].groupby('SANDI CASH LENDER (Masked)')['SANDI CASH BORROWER (Masked)'].nunique().reset_index()
+        df_inklusif.columns = ['LENDER', 'Score']
+        df_inklusif['LENDER'] = df_inklusif['LENDER'].astype(str).str.strip()
+        df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
+        
+        # Hilangkan tail(7) agar semua data masuk. Sort dinamis.
+        is_asc_ink = True if sort_ink == "Tertinggi di atas" else False
+        df_inklusif = df_inklusif.sort_values('Score', ascending=is_asc_ink)
+        
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
-        fig2.update_layout(**CHART_BASE)
+        
+        # Tinggi chart dinamis mengikuti jumlah row bank
+        dynamic_height_2 = max(300, len(df_inklusif) * 35)
+        fig2.update_layout(**CHART_BASE, height=dynamic_height_2)
         
         max_score = df_inklusif['Score'].max() if not df_inklusif.empty else 1
         if pd.isna(max_score): max_score = 1
         fig2.update_xaxes(range=[0, max_score * 1.25])
         
-        colors2 = ['#bfdbfe'] * min(6, len(df_inklusif)-1) + ['#1e3a5f'] if len(df_inklusif) > 0 else ['#1e3a5f']
+        colors2 = ['#bfdbfe'] * max(0, len(df_inklusif)-1) + ['#1e3a5f'] if len(df_inklusif) > 0 else ['#1e3a5f']
+        if not is_asc_ink: colors2.reverse() # Balik warna highlight jika disortir terbalik
         
         fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
+
 # ==========================================
-# 10. PETA JARINGAN EKOSISTEM (KOTAK PUTIH NORMAL)
+# 10. PETA JARINGAN EKOSISTEM
 # ==========================================
 st.write("")
 with st.container(border=True): 
@@ -446,16 +443,11 @@ with st.container(border=True):
         st.error(f"Data tidak lengkap untuk membuat Network Graph. Kolom berikut tidak ditemukan di periode ini: {', '.join(missing_cols)}")
     else:
         with col_filter_net:
-            # Penggabungan Pandas yang sudah diperbaiki total dari typo kurung siku
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
             
             st.write("") 
-            selected_bank = st.selectbox(
-                "Filter Bank", 
-                ["Semua Bank"] + all_banks_sorted, 
-                label_visibility="collapsed"
-            )
+            selected_bank = st.selectbox("Filter Bank", ["Semua Bank"] + all_banks_sorted, label_visibility="collapsed")
 
         df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()
         df_edges['SANDI CASH LENDER (Masked)'] = df_edges['SANDI CASH LENDER (Masked)'].astype(str)

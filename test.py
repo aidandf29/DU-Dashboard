@@ -186,13 +186,17 @@ st.markdown(f"""
 # ==========================================
 # 5. FUNGSI LOAD DATA EXCEL & GENERATE KUARTAL
 # ==========================================
-@st.cache_data
+@st.cache_data(ttl=300)  # Ditambahkan TTL (Time to Live) 5 menit agar cache mau update jika kolom diganti
 def load_excel_data_quarterly():
     try:
         raw_url = st.secrets["DATA_LINK"]
         if "/d/" in raw_url:
             file_id = raw_url.split("/d/")[1].split("/")[0]
-            download_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
+            # Penyesuaian agar bisa membedakan file asli GDrive (.xlsx) dan file Google Sheets native
+            if "sd=true" in raw_url:
+                download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+            else:
+                download_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
         else:
             download_url = raw_url
 
@@ -314,6 +318,8 @@ rels['Bank_Status'] = rels['Bank'].map(status_dict)
 rels['Counterparty_Status'] = rels['Counterparty'].map(status_dict)
 
 du_rels = rels[rels['Bank'].isin(DAFTAR_DU_RESMI)]
+# Filter agar kepatuhan tidak menghitung transaksi ke bank dirinya sendiri
+du_rels = du_rels[du_rels['Bank'] != du_rels['Counterparty']]
 counts = du_rels.groupby(['Bank', 'Counterparty_Status'])['Counterparty'].nunique().unstack(fill_value=0)
 
 if 'DU' not in counts.columns: counts['DU'] = 0
@@ -328,7 +334,6 @@ total_universe_du = len(DAFTAR_DU_RESMI)
 jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
-
 
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
@@ -378,7 +383,6 @@ with c3:
         st.markdown(LABEL_HTML.format("Bank Tidak Patuh"), unsafe_allow_html=True)
         st.markdown(VALUE_HTML.format(f"{jumlah_bermasalah} Bank"), unsafe_allow_html=True)
 
-
 # ==========================================
 # 9. PAPAN PERINGKAT (SISTEM TOGGLE 1 TOMBOL)
 # ==========================================
@@ -403,7 +407,6 @@ with col_chart1:
             </div>
             """, unsafe_allow_html=True)
         with c_v2:
-            # Anchor spesifik untuk tombol volume
             st.markdown('<div class="anchor-vol"></div>', unsafe_allow_html=True)
             
             if st.session_state.sort_vol_dir == "desc":
@@ -451,7 +454,6 @@ with col_chart2:
             </div>
             """, unsafe_allow_html=True)
         with c_i2:
-            # Anchor spesifik untuk tombol inklusivitas
             st.markdown('<div class="anchor-ink"></div>', unsafe_allow_html=True)
             
             if st.session_state.sort_ink_dir == "desc":
@@ -488,7 +490,6 @@ with col_chart2:
         fig2.update_traces(marker_color=colors2, width=0.6, texttemplate='<b>%{x}</b>', textposition='outside', textfont=dict(color="#0f172a"), cliponaxis=False)
         fig2.update_yaxes(type='category', tickfont=dict(color="#0f172a", size=11)) 
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
-
 
 # ==========================================
 # 10. PETA JARINGAN EKOSISTEM

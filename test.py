@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - MAROON GLASS & ICONIFY BUTTON
+# 3. CSS CUSTOM - MAROON GLASS & ICONIFY TOGGLE
 # ==========================================
 st.markdown("""
 <style>
@@ -61,7 +61,7 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* SETTINGAN DASAR KOTAK (Peta Jaringan) */
+/* SETTINGAN DASAR SEMUA KOTAK CONTAINER */
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -71,7 +71,7 @@ footer { display: none !important; }
     padding: 20px !important;
 }
 
-/* LEADERBOARD (MAROON GLASS) */
+/* LEADERBOARD MAROON GLASS */
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
 div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
     background: linear-gradient(135deg, rgba(136, 19, 55, 0.15) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
@@ -101,43 +101,45 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
 
 
 /* ====================================================
-   CSS HACK: TOMBOL ICONIFY (MINGCUTE UP & DOWN FILL) 
+   CSS HACK: TOMBOL TOGGLE ICONIFY MINGCUTE 
    ==================================================== */
 div[data-testid="stButton"] > button {
     padding: 0px !important;
-    height: 28px !important;
+    height: 32px !important;
     width: 32px !important;
     min-height: 0px !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
+    margin-top: -3px !important; /* Menaikkan tombol agar sejajar dengan judul chart */
 }
 
-/* Jika tombol memiliki label "UP_BTN", ganti background dengan SVG Mingcute-Up */
-div[data-testid="stButton"] > button:has(p:contains("UP_BTN")) {
-    background-image: url('https://api.iconify.design/mingcute/up-fill.svg?color=%230f172a') !important;
-    background-size: 18px !important; 
-    background-position: center !important; 
-    background-repeat: no-repeat !important;
-}
-
-/* Jika tombol memiliki label "DN_BTN", ganti background dengan SVG Mingcute-Down */
-div[data-testid="stButton"] > button:has(p:contains("DN_BTN")) {
-    background-image: url('https://api.iconify.design/mingcute/down-fill.svg?color=%230f172a') !important;
-    background-size: 18px !important; 
-    background-position: center !important; 
-    background-repeat: no-repeat !important;
-}
-
-/* Sembunyikan tulisan aslinya agar benar-benar terlihat seperti Icon */
-div[data-testid="stButton"] > button:has(p:contains("UP_BTN")) p, 
-div[data-testid="stButton"] > button:has(p:contains("DN_BTN")) p {
+/* HILANGKAN TEKS MUTLAK AGAR TIDAK WRAPPING VERTICAL (PENYEBAB ERROR SEBELUMNYA) */
+div[data-testid="stButton"] > button p {
+    font-size: 0px !important; 
     color: transparent !important;
+    margin: 0 !important;
 }
-/* Efek Hover */
+
 div[data-testid="stButton"] > button:hover {
     background-color: #f1f5f9 !important;
     border-color: #881337 !important;
+}
+
+/* JIKA LABEL TOMBOL MENGANDUNG "DN_" MUNCULKAN MINGCUTE DOWN */
+div[data-testid="stButton"] > button:has(p:contains("DN_")) {
+    background-image: url('https://api.iconify.design/mingcute/down-fill.svg?color=%230f172a') !important;
+    background-size: 20px !important; 
+    background-position: center !important; 
+    background-repeat: no-repeat !important;
+}
+
+/* JIKA LABEL TOMBOL MENGANDUNG "UP_" MUNCULKAN MINGCUTE UP */
+div[data-testid="stButton"] > button:has(p:contains("UP_")) {
+    background-image: url('https://api.iconify.design/mingcute/up-fill.svg?color=%230f172a') !important;
+    background-size: 20px !important; 
+    background-position: center !important; 
+    background-repeat: no-repeat !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -363,7 +365,7 @@ with c3:
 
 
 # ==========================================
-# 9. PAPAN PERINGKAT (TAMPIL TEPAT 7 ROW & SCROLL)
+# 9. PAPAN PERINGKAT (SISTEM TOGGLE 1 TOMBOL & MINGCUTE ICON)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -374,32 +376,33 @@ CHART_BASE = dict(
     xaxis_visible=False, yaxis_title=None,
 )
 
-# Inisialisasi State Arah Urutan
+# Inisialisasi State Arah Urutan (Default: desc = Tertinggi di atas)
 if "sort_vol_dir" not in st.session_state: st.session_state.sort_vol_dir = "desc"
 if "sort_ink_dir" not in st.session_state: st.session_state.sort_ink_dir = "desc"
 
 
 # ---- KIRI: LEADERBOARD VOLUME ----
 with col_chart1:
-    # Set Tinggi 360px agar memuat Header + Arrow + Tepat 7 Baris Plotly 
     with st.container(height=360, border=True): 
-        st.markdown(f"""
-        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
-            <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
-            Volume Transaksi Terbesar (Triliun Rp)
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Grid Button Iconify Tanpa Teks
-        c_v1, c_v2, _ = st.columns([0.08, 0.08, 0.84])
+        # Layout Kolom: 90% untuk Judul, 10% untuk Tombol Toggle di Kanan
+        c_v1, c_v2 = st.columns([0.9, 0.1])
         with c_v1:
-            if st.button("UP_BTN", key="vol_up", help="Terendah di Atas"):
-                st.session_state.sort_vol_dir = "asc"
-                st.rerun()
+            st.markdown(f"""
+            <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
+                <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
+                Volume Transaksi Terbesar (Triliun Rp)
+            </div>
+            """, unsafe_allow_html=True)
         with c_v2:
-            if st.button("DN_BTN", key="vol_down", help="Tertinggi di Atas"):
-                st.session_state.sort_vol_dir = "desc"
-                st.rerun()
+            # Sistem Toggle 1 Tombol
+            if st.session_state.sort_vol_dir == "desc":
+                if st.button("DN_VOL", key="vol_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
+                    st.session_state.sort_vol_dir = "asc"
+                    st.rerun()
+            else:
+                if st.button("UP_VOL", key="vol_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
+                    st.session_state.sort_vol_dir = "desc"
+                    st.rerun()
         
         df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
         df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
@@ -411,7 +414,7 @@ with col_chart1:
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         
-        # Perkalian dinamis 45px per bar. Akan membuat batangnya tebal dan hanya 7 buah yang masuk frame 360px.
+        # Perkalian dinamis 45px per bar. Akan pas menampilkan 7 baris dalam 360px
         dynamic_height_1 = max(300, len(df_vol) * 45)
         fig1.update_layout(**CHART_BASE, height=dynamic_height_1)
         
@@ -428,25 +431,26 @@ with col_chart1:
 
 # ---- KANAN: LEADERBOARD INKLUSIVITAS ----
 with col_chart2:
-    # Set Tinggi 360px
     with st.container(height=360, border=True): 
-        st.markdown(f"""
-        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
-            <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
-            Apresiasi Inklusivitas Transaksi DU
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Grid Button Iconify Tanpa Teks
-        c_i1, c_i2, _ = st.columns([0.08, 0.08, 0.84])
+        # Layout Kolom: 90% untuk Judul, 10% untuk Tombol Toggle di Kanan
+        c_i1, c_i2 = st.columns([0.9, 0.1])
         with c_i1:
-            if st.button("UP_BTN", key="ink_up", help="Terendah di Atas"):
-                st.session_state.sort_ink_dir = "asc"
-                st.rerun()
+            st.markdown(f"""
+            <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
+                <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
+                Apresiasi Inklusivitas Transaksi DU
+            </div>
+            """, unsafe_allow_html=True)
         with c_i2:
-            if st.button("DN_BTN", key="ink_down", help="Tertinggi di Atas"):
-                st.session_state.sort_ink_dir = "desc"
-                st.rerun()
+            # Sistem Toggle 1 Tombol
+            if st.session_state.sort_ink_dir == "desc":
+                if st.button("DN_INK", key="ink_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
+                    st.session_state.sort_ink_dir = "asc"
+                    st.rerun()
+            else:
+                if st.button("UP_INK", key="ink_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
+                    st.session_state.sort_ink_dir = "desc"
+                    st.rerun()
         
         lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
         small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
@@ -460,7 +464,6 @@ with col_chart2:
         
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         
-        # Perkalian dinamis 45px per bar. 
         dynamic_height_2 = max(300, len(df_inklusif) * 45)
         fig2.update_layout(**CHART_BASE, height=dynamic_height_2)
         

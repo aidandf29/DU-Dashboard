@@ -30,7 +30,7 @@ ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
 # ==========================================
-# 3. CSS CUSTOM - FIX MAROON GLASS DENGAN BORDER TEBAL & SHADOW
+# 3. CSS CUSTOM - MAROON GLASS & ICONIFY BUTTON
 # ==========================================
 st.markdown("""
 <style>
@@ -48,12 +48,10 @@ footer { display: none !important; }
     padding-right: 3rem !important; 
 }
 
-/* BACKGROUND UTAMA DASHBOARD (ABU-ABU NETRAL BERSIH) */
-.stApp { 
-    background-color: #f1f5f9 !important; 
-}
+/* BACKGROUND UTAMA DASHBOARD */
+.stApp { background-color: #f1f5f9 !important; }
 
-/* KARTU METRIC RINGKASAN ATAS (SOLID PUTIH) */
+/* KARTU METRIC RINGKASAN ATAS */
 [data-testid="metric-container"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -63,7 +61,7 @@ footer { display: none !important; }
     padding: 15px 20px !important;
 }
 
-/* SETTINGAN DASAR SEMUA KOTAK CONTAINER (Peta Jaringan Tetap Putih Solid) */
+/* SETTINGAN DASAR KOTAK (Peta Jaringan) */
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #ffffff !important;
     border-radius: 12px !important;
@@ -73,7 +71,7 @@ footer { display: none !important; }
     padding: 20px !important;
 }
 
-/* TARGET MUTLAK ANTI-GAGAL: HANYA KOTAK DI DALAM STCOLUMN (LEADERBOARD) */
+/* LEADERBOARD (MAROON GLASS) */
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
 div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
     background: linear-gradient(135deg, rgba(136, 19, 55, 0.15) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
@@ -101,8 +99,46 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
 .nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
 .nav-profile-role { font-size: 11px; color: #475569; font-weight: 500; }
 
-/* Menyesuaikan radio button agar terlihat lebih kecil & rapi di dashboard */
-div.row-widget.stRadio > div{ flex-direction:row; gap: 15px; }
+
+/* ====================================================
+   CSS HACK: TOMBOL ICONIFY (MINGCUTE UP & DOWN FILL) 
+   ==================================================== */
+div[data-testid="stButton"] > button {
+    padding: 0px !important;
+    height: 28px !important;
+    width: 32px !important;
+    min-height: 0px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+}
+
+/* Jika tombol memiliki label "UP_BTN", ganti background dengan SVG Mingcute-Up */
+div[data-testid="stButton"] > button:has(p:contains("UP_BTN")) {
+    background-image: url('https://api.iconify.design/mingcute/up-fill.svg?color=%230f172a') !important;
+    background-size: 18px !important; 
+    background-position: center !important; 
+    background-repeat: no-repeat !important;
+}
+
+/* Jika tombol memiliki label "DN_BTN", ganti background dengan SVG Mingcute-Down */
+div[data-testid="stButton"] > button:has(p:contains("DN_BTN")) {
+    background-image: url('https://api.iconify.design/mingcute/down-fill.svg?color=%230f172a') !important;
+    background-size: 18px !important; 
+    background-position: center !important; 
+    background-repeat: no-repeat !important;
+}
+
+/* Sembunyikan tulisan aslinya agar benar-benar terlihat seperti Icon */
+div[data-testid="stButton"] > button:has(p:contains("UP_BTN")) p, 
+div[data-testid="stButton"] > button:has(p:contains("DN_BTN")) p {
+    color: transparent !important;
+}
+/* Efek Hover */
+div[data-testid="stButton"] > button:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #881337 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -276,6 +312,7 @@ jumlah_bermasalah = total_universe_du - lender_patuh_count
 avg_kepatuhan = (lender_patuh_count / total_universe_du) * 100 if total_universe_du > 0 else 0
 total_volume_t = df['NOMINAL (FULL AMOUNT)'].sum() / 1e12
 
+
 # ==========================================
 # 8. KARTU UTAMA & DIAGRAM DONUT DINAMIS
 # ==========================================
@@ -326,7 +363,7 @@ with c3:
 
 
 # ==========================================
-# 9. PAPAN PERINGKAT (SCROLLABLE & SORTABLE)
+# 9. PAPAN PERINGKAT (TAMPIL TEPAT 7 ROW & SCROLL)
 # ==========================================
 st.write("")
 col_chart1, col_chart2 = st.columns(2)
@@ -337,30 +374,45 @@ CHART_BASE = dict(
     xaxis_visible=False, yaxis_title=None,
 )
 
+# Inisialisasi State Arah Urutan
+if "sort_vol_dir" not in st.session_state: st.session_state.sort_vol_dir = "desc"
+if "sort_ink_dir" not in st.session_state: st.session_state.sort_ink_dir = "desc"
+
+
 # ---- KIRI: LEADERBOARD VOLUME ----
 with col_chart1:
-    with st.container(height=450, border=True): 
+    # Set Tinggi 360px agar memuat Header + Arrow + Tepat 7 Baris Plotly 
+    with st.container(height=360, border=True): 
         st.markdown(f"""
-        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
+        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
             Volume Transaksi Terbesar (Triliun Rp)
         </div>
         """, unsafe_allow_html=True)
         
-        # Ditambahkan parameter label_visibility="collapsed" agar label tersembunyi
-        sort_vol = st.radio("Urutkan", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_vol", label_visibility="collapsed")
+        # Grid Button Iconify Tanpa Teks
+        c_v1, c_v2, _ = st.columns([0.08, 0.08, 0.84])
+        with c_v1:
+            if st.button("UP_BTN", key="vol_up", help="Terendah di Atas"):
+                st.session_state.sort_vol_dir = "asc"
+                st.rerun()
+        with c_v2:
+            if st.button("DN_BTN", key="vol_down", help="Tertinggi di Atas"):
+                st.session_state.sort_vol_dir = "desc"
+                st.rerun()
         
         df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
         df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
         df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
         df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
         
-        is_asc = True if sort_vol == "Tertinggi di atas" else False
+        is_asc = True if st.session_state.sort_vol_dir == "desc" else False
         df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=is_asc)
         
         fig1 = px.bar(df_vol, x="NOMINAL (TRILIUN)", y="SANDI CASH LENDER (Masked)", orientation='h')
         
-        dynamic_height_1 = max(300, len(df_vol) * 35)
+        # Perkalian dinamis 45px per bar. Akan membuat batangnya tebal dan hanya 7 buah yang masuk frame 360px.
+        dynamic_height_1 = max(300, len(df_vol) * 45)
         fig1.update_layout(**CHART_BASE, height=dynamic_height_1)
         
         max_vol = df_vol['NOMINAL (TRILIUN)'].max() if not df_vol.empty else 1
@@ -376,16 +428,25 @@ with col_chart1:
 
 # ---- KANAN: LEADERBOARD INKLUSIVITAS ----
 with col_chart2:
-    with st.container(height=450, border=True): 
+    # Set Tinggi 360px
+    with st.container(height=360, border=True): 
         st.markdown(f"""
-        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;'>
+        <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
             <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
             Apresiasi Inklusivitas Transaksi DU
         </div>
         """, unsafe_allow_html=True)
         
-        # Ditambahkan parameter label_visibility="collapsed" agar label tersembunyi
-        sort_ink = st.radio("Urutkan", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_ink", label_visibility="collapsed")
+        # Grid Button Iconify Tanpa Teks
+        c_i1, c_i2, _ = st.columns([0.08, 0.08, 0.84])
+        with c_i1:
+            if st.button("UP_BTN", key="ink_up", help="Terendah di Atas"):
+                st.session_state.sort_ink_dir = "asc"
+                st.rerun()
+        with c_i2:
+            if st.button("DN_BTN", key="ink_down", help="Tertinggi di Atas"):
+                st.session_state.sort_ink_dir = "desc"
+                st.rerun()
         
         lender_counts_real = df.groupby('SANDI CASH BORROWER (Masked)')['SANDI CASH LENDER (Masked)'].nunique()
         small_borrowers_real = lender_counts_real[lender_counts_real <= 2].index
@@ -394,12 +455,13 @@ with col_chart2:
         df_inklusif['LENDER'] = df_inklusif['LENDER'].astype(str).str.strip()
         df_inklusif = df_inklusif[df_inklusif['LENDER'].isin(DAFTAR_DU_RESMI)]
         
-        is_asc_ink = True if sort_ink == "Tertinggi di atas" else False
+        is_asc_ink = True if st.session_state.sort_ink_dir == "desc" else False
         df_inklusif = df_inklusif.sort_values('Score', ascending=is_asc_ink)
         
         fig2 = px.bar(df_inklusif, x="Score", y="LENDER", orientation='h')
         
-        dynamic_height_2 = max(300, len(df_inklusif) * 35)
+        # Perkalian dinamis 45px per bar. 
+        dynamic_height_2 = max(300, len(df_inklusif) * 45)
         fig2.update_layout(**CHART_BASE, height=dynamic_height_2)
         
         max_score = df_inklusif['Score'].max() if not df_inklusif.empty else 1
@@ -439,8 +501,6 @@ with st.container(border=True):
         with col_filter_net:
             all_banks = pd.concat([df['SANDI CASH LENDER (Masked)'], df['SANDI CASH BORROWER (Masked)']]).dropna().unique()
             all_banks_sorted = sorted([str(b) for b in all_banks])
-            
-            st.write("") 
             selected_bank = st.selectbox("Filter Bank", ["Semua Bank"] + all_banks_sorted, label_visibility="collapsed")
 
         df_edges = df[['SANDI CASH LENDER (Masked)', 'SANDI CASH BORROWER (Masked)']].drop_duplicates()

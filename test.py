@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inisialisasi State Arah Urutan ditempatkan di paling atas
+# Inisialisasi State Arah Urutan
 if "sort_vol_dir" not in st.session_state: st.session_state.sort_vol_dir = "desc"
 if "sort_ink_dir" not in st.session_state: st.session_state.sort_ink_dir = "desc"
 
@@ -33,13 +33,13 @@ ICON_VOLUME_SIZE = 22
 ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
-# Link Base64 SVG asli dari Anda
-ARROW_BOTTOM = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPgoJPHBhdGggZD0iTTAgMGgxNXYxNUgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0iTTcuNSAxMkwwIDRoMTV6IiAvPgo8L3N2Zz4K"
-ARROW_UP = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPgoJPHBhdGggZD0iTTAgMGgxNXYxNUgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0ibTcuNSAzbDcuNSA4SDB6IiAvPgo8L3N2Zz4K"
+# Base64 SVG panah dari referensi yang kamu berikan (Warna disesuaikan jadi #0f172a)
+ARROW_DOWN = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPjxwYXRoIGQ9Ik0wIDBoMTV2MTVIMHoiIGZpbGw9Im5vbmUiIC8+PHBhdGggZmlsbD0iIzBmMTcyYSIgZD0iTTcuNSAxMkwwIDRoMTV6IiAvPjwvc3ZnPg=="
+ARROW_UP = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPjxwYXRoIGQ9Ik0wIDBoMTV2MTVIMHoiIGZpbGw9Im5vbmUiIC8+PHBhdGggZmlsbD0iIzBmMTcyYSIgZD0ibTcuNSAzbDcuNSA4SDB6IiAvPjwvc3ZnPg=="
 
 # Penentuan tipe asset arrow berdasarkan arah sort aktif
-vol_arrow = ARROW_BOTTOM if st.session_state.sort_vol_dir == "desc" else ARROW_UP
-ink_arrow = ARROW_BOTTOM if st.session_state.sort_ink_dir == "desc" else ARROW_UP
+vol_arrow = ARROW_DOWN if st.session_state.sort_vol_dir == "desc" else ARROW_UP
+ink_arrow = ARROW_DOWN if st.session_state.sort_ink_dir == "desc" else ARROW_UP
 
 # ==========================================
 # 3. CSS CUSTOM - MAROON GLASS & FIXING TOMBOL
@@ -111,7 +111,7 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {{
 .nav-profile-name {{ font-size: 13px; font-weight: 700; color: #0f172a; }}
 .nav-profile-role {{ font-size: 11px; color: #475569; font-weight: 500; }}
 
-/* SETTING CONTAINER TOMBOL UTAMA */
+/* SETTING BENTUK TOMBOL KOTAK KECIL */
 div[data-testid="stButton"] > button {{
     padding: 0px !important;
     height: 32px !important;
@@ -124,7 +124,7 @@ div[data-testid="stButton"] > button {{
     overflow: hidden !important;
 }}
 
-/* [UPDATED] Sembunyikan teks label seutuhnya dari layout tree (Solusi Bug image_fc0b75.png) */
+/* SEMBUNYIKAN TEKS TOMBOL SEUTUHNYA */
 div[data-testid="stButton"] > button p {{
     display: none !important;
 }}
@@ -134,20 +134,28 @@ div[data-testid="stButton"] > button:hover {{
     border-color: #881337 !important;
 }}
 
-/* [UPDATED] Inject Background SVG Akurat Berdasarkan Urutan Baris Kolom Utama (Row 3) */
-div[data-testid="stColumns"]:nth-of-type(3) > div[data-testid="stColumn"]:nth-of-type(1) div[data-testid="stButton"] > button {{
+/* ---------------------------------------------------------------------- */
+/* CARA BARU (BULLETPROOF): Menggunakan Anchor dan Relasi Kolom Terukur */
+/* ---------------------------------------------------------------------- */
+
+/* Target Tombol Volume: Kombinasi CSS relasi kolom dan anchor :has() */
+div[data-testid="stColumn"]:nth-child(1) div[data-testid="stColumn"]:nth-child(2) button,
+div[data-testid="element-container"]:has(.anchor-vol) + div[data-testid="element-container"] button {{
     background-image: url('{vol_arrow}') !important;
     background-size: 16px !important; 
     background-position: center !important; 
     background-repeat: no-repeat !important;
 }}
 
-div[data-testid="stColumns"]:nth-of-type(3) > div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] > button {{
+/* Target Tombol Inklusivitas: Kombinasi CSS relasi kolom dan anchor :has() */
+div[data-testid="stColumn"]:nth-child(2) div[data-testid="stColumn"]:nth-child(2) button,
+div[data-testid="element-container"]:has(.anchor-ink) + div[data-testid="element-container"] button {{
     background-image: url('{ink_arrow}') !important;
     background-size: 16px !important; 
     background-position: center !important; 
     background-repeat: no-repeat !important;
 }}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -395,12 +403,15 @@ with col_chart1:
             </div>
             """, unsafe_allow_html=True)
         with c_v2:
+            # Anchor spesifik untuk tombol volume
+            st.markdown('<div class="anchor-vol"></div>', unsafe_allow_html=True)
+            
             if st.session_state.sort_vol_dir == "desc":
-                if st.button("DN_VOL", key="vol_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
+                if st.button("V", key="vol_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
                     st.session_state.sort_vol_dir = "asc"
                     st.rerun()
             else:
-                if st.button("UP_VOL", key="vol_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
+                if st.button("V", key="vol_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
                     st.session_state.sort_vol_dir = "desc"
                     st.rerun()
         
@@ -440,12 +451,15 @@ with col_chart2:
             </div>
             """, unsafe_allow_html=True)
         with c_i2:
+            # Anchor spesifik untuk tombol inklusivitas
+            st.markdown('<div class="anchor-ink"></div>', unsafe_allow_html=True)
+            
             if st.session_state.sort_ink_dir == "desc":
-                if st.button("DN_INK", key="ink_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
+                if st.button("I", key="ink_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
                     st.session_state.sort_ink_dir = "asc"
                     st.rerun()
             else:
-                if st.button("UP_INK", key="ink_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
+                if st.button("I", key="ink_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
                     st.session_state.sort_ink_dir = "desc"
                     st.rerun()
         

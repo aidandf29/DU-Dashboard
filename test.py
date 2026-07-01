@@ -112,13 +112,19 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {{
 .nav-profile-role {{ font-size: 11px; color: #475569; font-weight: 500; }}
 
 /* SETTING BENTUK TOMBOL KOTAK KECIL - DIUBAH JADI TRANSPARAN (FIX BG PUTIH) */
-div[data-testid="stButton"] > button {{
+/* Selector diperkuat: mencakup atribut kind="secondary" & tanpa batasan direct-child,
+   karena versi Streamlit terbaru membungkus <button kind="secondary"> di dalam elemen tambahan
+   sehingga selector lama (> button) tidak selalu match. */
+div[data-testid="stButton"] button,
+div[data-testid="stButton"] button[kind="secondary"],
+div[data-testid="stButton"] button[kind="primary"] {{
     padding: 0px !important;
     height: 32px !important;
     width: 32px !important;
     min-height: 0px !important;
     border-radius: 8px !important;
     border: none !important;
+    background: transparent !important;
     background-color: transparent !important;
     box-shadow: none !important;
     margin-top: -3px !important;
@@ -126,13 +132,21 @@ div[data-testid="stButton"] > button {{
 }}
 
 /* SEMBUNYIKAN TEKS TOMBOL SEUTUHNYA */
-div[data-testid="stButton"] > button p {{
+div[data-testid="stButton"] button p {{
     display: none !important;
 }}
 
-div[data-testid="stButton"] > button:hover {{
-    background-color: rgba(15, 23, 42, 0.06) !important;
+/* Semua state (hover/focus/active) tetap transparan, hanya diberi highlight halus */
+div[data-testid="stButton"] button:hover,
+div[data-testid="stButton"] button:focus,
+div[data-testid="stButton"] button:focus:not(:active),
+div[data-testid="stButton"] button:active {{
+    background: rgba(15, 23, 42, 0.08) !important;
+    background-color: rgba(15, 23, 42, 0.08) !important;
+    border: none !important;
     border-color: transparent !important;
+    box-shadow: none !important;
+    color: inherit !important;
 }}
 
 /* ---------------------------------------------------------------------- */

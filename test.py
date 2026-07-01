@@ -350,7 +350,7 @@ with col_chart1:
         """, unsafe_allow_html=True)
         
         # Tombol Sort
-        sort_vol = st.radio("Urutkan Volume:", ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_vol")
+        sort_vol = st.radio( ["Tertinggi di atas", "Terendah di atas"], horizontal=True, key="sort_vol")
         
         df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum().reset_index()
         df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()

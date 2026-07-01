@@ -425,11 +425,11 @@ with col_chart1:
             st.markdown('<div class="anchor-vol"></div>', unsafe_allow_html=True)
             
             if st.session_state.sort_vol_dir == "desc":
-                if st.button("V", key="vol_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
+                if st.button("V", key="vol_toggle", help="Klik untuk merubah."):
                     st.session_state.sort_vol_dir = "asc"
                     st.rerun()
             else:
-                if st.button("V", key="vol_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
+                if st.button("V", key="vol_toggle", help="Klik untuk merubah."):
                     st.session_state.sort_vol_dir = "desc"
                     st.rerun()
         
@@ -472,11 +472,11 @@ with col_chart2:
             st.markdown('<div class="anchor-ink"></div>', unsafe_allow_html=True)
             
             if st.session_state.sort_ink_dir == "desc":
-                if st.button("I", key="ink_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
+                if st.button("I", key="ink_toggle", help="Klik untuk merubah."):
                     st.session_state.sort_ink_dir = "asc"
                     st.rerun()
             else:
-                if st.button("I", key="ink_toggle", help="Urutan saat ini: Terendah. Klik untuk merubah."):
+                if st.button("I", key="ink_toggle", help="Klik untuk merubah."):
                     st.session_state.sort_ink_dir = "desc"
                     st.rerun()
         

@@ -370,7 +370,7 @@ df_vol = df.groupby('SANDI CASH LENDER (Masked)')['NOMINAL (FULL AMOUNT)'].sum()
 df_vol['SANDI CASH LENDER (Masked)'] = df_vol['SANDI CASH LENDER (Masked)'].astype(str).str.strip()
 df_vol = df_vol[df_vol['SANDI CASH LENDER (Masked)'].isin(DAFTAR_DU_RESMI)]
 df_vol['NOMINAL (TRILIUN)'] = df_vol['NOMINAL (FULL AMOUNT)'] / 1e12
-df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True).tail(7)
+df_vol = df_vol.sort_values('NOMINAL (TRILIUN)', ascending=True)
 
 with col_chart1:
     with st.container(border=True): 

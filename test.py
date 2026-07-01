@@ -15,12 +15,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# [UPDATED] Inisialisasi State Arah Urutan dipindah ke atas agar terbaca oleh CSS Dinamis
+# Inisialisasi State Arah Urutan ditempatkan di paling atas
 if "sort_vol_dir" not in st.session_state: st.session_state.sort_vol_dir = "desc"
 if "sort_ink_dir" not in st.session_state: st.session_state.sort_ink_dir = "desc"
 
 # ==========================================
-# 2. KONFIGURASI ICON CUSTOM 
+# 2. KONFIGURASI ICON CUSTOM & BASE64 SVG
 # ==========================================
 ICON_LOGO_URL = "https://api.iconify.design/streamline-ultimate/dice-bold.svg?color=%231e3a5f"
 ICON_NOTIF_URL = "https://api.iconify.design/basil/notification-on-solid.svg?color=%2364748b"
@@ -33,60 +33,59 @@ ICON_VOLUME_SIZE = 22
 ICON_INKLUSIF_SIZE = 22
 ICON_NET_SIZE = 24
 
-# [UPDATED] Base64 SVG yang kamu berikan
+# Link Base64 SVG asli dari Anda
 ARROW_BOTTOM = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPgoJPHBhdGggZD0iTTAgMGgxNXYxNUgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0iTTcuNSAxMkwwIDRoMTV6IiAvPgo8L3N2Zz4K"
 ARROW_UP = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTUgMTUiPgoJPHBhdGggZD0iTTAgMGgxNXYxNUgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0ibTcuNSAzbDcuNSA4SDB6IiAvPgo8L3N2Zz4K"
 
-# Logika penentuan icon berdasarkan state saat ini
+# Penentuan tipe asset arrow berdasarkan arah sort aktif
 vol_arrow = ARROW_BOTTOM if st.session_state.sort_vol_dir == "desc" else ARROW_UP
 ink_arrow = ARROW_BOTTOM if st.session_state.sort_ink_dir == "desc" else ARROW_UP
 
-
 # ==========================================
-# 3. CSS CUSTOM - MAROON GLASS & INJEKSI ICON
+# 3. CSS CUSTOM - MAROON GLASS & FIXING TOMBOL
 # ==========================================
-st.markdown("""
+st.markdown(f"""
 <style>
 /* HAPUS HEADER BAWAAN STREAMLIT */
-[data-testid="stHeader"] { display: none !important; }
-footer { display: none !important; }
-.header-anchor { display: none !important; }
+[data-testid="stHeader"] {{ display: none !important; }}
+footer {{ display: none !important; }}
+.header-anchor {{ display: none !important; }}
 
 /* LEBARKAN KONTEN APLIKASI */
-.block-container {
+.block-container {{
     max-width: 100% !important; 
     padding-top: 1rem !important;
     padding-bottom: 3rem !important;
     padding-left: 3rem !important; 
     padding-right: 3rem !important; 
-}
+}}
 
 /* BACKGROUND UTAMA DASHBOARD */
-.stApp { background-color: #f1f5f9 !important; }
+.stApp {{ background-color: #f1f5f9 !important; }}
 
 /* KARTU METRIC RINGKASAN ATAS */
-[data-testid="metric-container"] {
+[data-testid="metric-container"] {{
     background-color: #ffffff !important;
     border-radius: 12px !important;
     border: none !important; 
     border-top: 4px solid #1e3a5f !important;
     box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05) !important;
     padding: 15px 20px !important;
-}
+}}
 
 /* SETTINGAN DASAR SEMUA KOTAK CONTAINER */
-[data-testid="stVerticalBlockBorderWrapper"] {
+[data-testid="stVerticalBlockBorderWrapper"] {{
     background-color: #ffffff !important;
     border-radius: 12px !important;
     border: 1px solid #e2e8f0 !important; 
     border-top: 4px solid #1e3a5f !important;
     box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05) !important;
     padding: 20px !important;
-}
+}}
 
 /* LEADERBOARD MAROON GLASS */
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
-div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
+div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {{
     background: linear-gradient(135deg, rgba(136, 19, 55, 0.15) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
@@ -94,26 +93,26 @@ div[data-testid="stColumn"] div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 3px solid #881337 !important; 
     border-top: 5px solid #4c0519 !important; 
     box-shadow: 0 20px 25px -5px rgba(136, 19, 55, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15) !important;
-}
+}}
 
 /* NAVBAR BRANDING STYLE */
-.nav-container {
+.nav-container {{
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 25px; font-family: 'Inter', sans-serif;
     border-bottom: 1px solid #cbd5e1; margin-bottom: 25px;
-}
-.nav-logo { display: flex; align-items: center; gap: 12px; }
-.nav-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}
-.nav-subtitle { font-size: 12px; color: #475569; font-weight: 500; }
-.nav-menu { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.05); padding: 6px; border-radius: 10px; }
-.nav-item { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-.nav-item.active { background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.nav-item.disabled { color: #64748b; cursor: not-allowed; } 
-.nav-profile-name { font-size: 13px; font-weight: 700; color: #0f172a; }
-.nav-profile-role { font-size: 11px; color: #475569; font-weight: 500; }
+}}
+.nav-logo {{ display: flex; align-items: center; gap: 12px; }}
+.nav-title {{ font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 2px;}}
+.nav-subtitle {{ font-size: 12px; color: #475569; font-weight: 500; }}
+.nav-menu {{ display: flex; gap: 8px; background: rgba(15, 23, 42, 0.05); padding: 6px; border-radius: 10px; }}
+.nav-item {{ padding: 6px 16px; font-size: 13px; font-weight: 600; color: #0f172a; border-radius: 6px; cursor: pointer; transition: 0.2s; }}
+.nav-item.active {{ background: #ffffff; color: #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+.nav-item.disabled {{ color: #64748b; cursor: not-allowed; }} 
+.nav-profile-name {{ font-size: 13px; font-weight: 700; color: #0f172a; }}
+.nav-profile-role {{ font-size: 11px; color: #475569; font-weight: 500; }}
 
-/* RESET DAN SETTING TOMBOL UTAMA */
-div[data-testid="stButton"] > button {
+/* SETTING CONTAINER TOMBOL UTAMA */
+div[data-testid="stButton"] > button {{
     padding: 0px !important;
     height: 32px !important;
     width: 32px !important;
@@ -122,35 +121,28 @@ div[data-testid="stButton"] > button {
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
     margin-top: -3px !important;
-}
+    overflow: hidden !important;
+}}
 
-/* HILANGKAN TEKS TOMBOL */
-div[data-testid="stButton"] > button p {
-    font-size: 0px !important; 
-    color: transparent !important;
-    margin: 0 !important;
-}
+/* [UPDATED] Sembunyikan teks label seutuhnya dari layout tree (Solusi Bug image_fc0b75.png) */
+div[data-testid="stButton"] > button p {{
+    display: none !important;
+}}
 
-div[data-testid="stButton"] > button:hover {
+div[data-testid="stButton"] > button:hover {{
     background-color: #f1f5f9 !important;
     border-color: #881337 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+}}
 
-# [UPDATED] Suntik Icon secara dinamis berdasarkan posisi kolom agar terhindar dari bug :contains()
-st.markdown(f"""
-<style>
-/* Tombol di Kolom Kiri (Leaderboard Volume) */
-div[data-testid="stColumns"] > div[data-testid="stColumn"]:nth-child(1) div[data-testid="stButton"] > button {{
+/* [UPDATED] Inject Background SVG Akurat Berdasarkan Urutan Baris Kolom Utama (Row 3) */
+div[data-testid="stColumns"]:nth-of-type(3) > div[data-testid="stColumn"]:nth-of-type(1) div[data-testid="stButton"] > button {{
     background-image: url('{vol_arrow}') !important;
     background-size: 16px !important; 
     background-position: center !important; 
     background-repeat: no-repeat !important;
 }}
 
-/* Tombol di Kolom Kanan (Leaderboard Inklusivitas) */
-div[data-testid="stColumns"] > div[data-testid="stColumn"]:nth-child(2) div[data-testid="stButton"] > button {{
+div[data-testid="stColumns"]:nth-of-type(3) > div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] > button {{
     background-image: url('{ink_arrow}') !important;
     background-size: 16px !important; 
     background-position: center !important; 
@@ -158,7 +150,6 @@ div[data-testid="stColumns"] > div[data-testid="stColumn"]:nth-child(2) div[data
 }}
 </style>
 """, unsafe_allow_html=True)
-
 
 # ==========================================
 # 4. HTML NAVBAR CUSTOM
@@ -395,7 +386,6 @@ CHART_BASE = dict(
 # ---- KIRI: LEADERBOARD VOLUME ----
 with col_chart1:
     with st.container(height=360, border=True): 
-        # Layout Kolom: 90% untuk Judul, 10% untuk Tombol Toggle di Kanan
         c_v1, c_v2 = st.columns([0.9, 0.1])
         with c_v1:
             st.markdown(f"""
@@ -405,7 +395,6 @@ with col_chart1:
             </div>
             """, unsafe_allow_html=True)
         with c_v2:
-            # Sistem Toggle 1 Tombol
             if st.session_state.sort_vol_dir == "desc":
                 if st.button("DN_VOL", key="vol_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
                     st.session_state.sort_vol_dir = "asc"
@@ -442,7 +431,6 @@ with col_chart1:
 # ---- KANAN: LEADERBOARD INKLUSIVITAS ----
 with col_chart2:
     with st.container(height=360, border=True): 
-        # Layout Kolom: 90% untuk Judul, 10% untuk Tombol Toggle di Kanan
         c_i1, c_i2 = st.columns([0.9, 0.1])
         with c_i1:
             st.markdown(f"""
@@ -452,7 +440,6 @@ with col_chart2:
             </div>
             """, unsafe_allow_html=True)
         with c_i2:
-            # Sistem Toggle 1 Tombol
             if st.session_state.sort_ink_dir == "desc":
                 if st.button("DN_INK", key="ink_toggle", help="Urutan saat ini: Tertinggi. Klik untuk merubah."):
                     st.session_state.sort_ink_dir = "asc"

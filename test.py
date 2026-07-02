@@ -9,7 +9,7 @@ import networkx as nx
 # 1. KONFIGURASI HALAMAN (WIDE)
 # ==========================================
 st.set_page_config(
-    page_title="Supervision Dashboard",
+    page_title="DaDU",
     page_icon="💠",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -181,7 +181,7 @@ st.markdown(f"""
 <div class="nav-container">
 <div class="nav-logo">
 <img src="{ICON_LOGO_URL}&width={ICON_LOGO_SIZE}&height={ICON_LOGO_SIZE}" style="flex-shrink: 0;">
-<div><div class="nav-title">SUPERVISION DASHBOARD</div><div class="nav-subtitle">Bank Indonesia • DPPK / PUVA</div></div>
+<div><div class="nav-title">DaDU: DASHBOARD DEALER UTAMA</div><div class="nav-subtitle">Bank Indonesia • DPPK / PUVA</div></div>
 </div>
 <div class="nav-menu">
 <div class="nav-item active">REPO</div>
@@ -418,7 +418,7 @@ with col_chart1:
             st.markdown(f"""
             <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
                 <img src="{ICON_VOLUME_URL}&width={ICON_VOLUME_SIZE}&height={ICON_VOLUME_SIZE}" style="flex-shrink: 0;">
-                Volume Transaksi Terbesar (Triliun Rp)
+                Leaderboard Volume Transaksi (Triliun Rp)
             </div>
             """, unsafe_allow_html=True)
         with c_v2:
@@ -465,7 +465,7 @@ with col_chart2:
             st.markdown(f"""
             <div style='color: #0f172a; font-weight: 700; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;'>
                 <img src="{ICON_INKLUSIF_URL}&width={ICON_INKLUSIF_SIZE}&height={ICON_INKLUSIF_SIZE}" style="flex-shrink: 0;">
-                Apresiasi Inklusivitas Transaksi DU
+                Leaderboard Interkoneksi Inklusivitas Transaksi DU
             </div>
             """, unsafe_allow_html=True)
         with c_i2:
